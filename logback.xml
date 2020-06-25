@@ -17,10 +17,10 @@
 	<!-- <root level="debug">
 		<appender-ref ref="FILE" />
 	</root>-->
-	<!--<root level="INFO">
+	<!-- <root level="INFO">
 		<appender-ref ref="STDOUT" />
 	</root>-->
-	<logger name="idlab.massif">
+	<logger name="idlab.massif" level="INFO">
     	<appender-ref ref="STDOUT" />
 	</logger>
 
