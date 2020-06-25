@@ -24,6 +24,8 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.RDF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.espertech.esper.client.Configuration;
 import com.espertech.esper.client.EPServiceProvider;
@@ -51,6 +53,8 @@ public class EsperCEPComp implements CEPInf {
 	private ListenerInf listener;
 
 	private Query typeQuery;
+
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	public EsperCEPComp() {
 		this.allEventTypes = new HashSet<String>();
@@ -91,13 +95,14 @@ public class EsperCEPComp implements CEPInf {
 
 	@Override
 	public boolean addEvent(String event) {
+		logger.debug("Received message" + event);
 		List<String> foundTypes = new ArrayList<String>();
 		List<String> foundInds = new ArrayList<String>();
 
 		Model dataModel = ModelFactory.createDefaultModel();
 		try {
 			InputStream targetStream = new ByteArrayInputStream(event.getBytes());
-			dataModel.read(targetStream,"RDF/XML");
+			dataModel.read(targetStream,"TTL");
 			StmtIterator it = dataModel.listStatements();
 			try (QueryExecution qexec = QueryExecutionFactory.create(typeQuery, dataModel)) {
 				ResultSet result = qexec.execSelect();
@@ -110,8 +115,13 @@ public class EsperCEPComp implements CEPInf {
 						foundInds.add(sol.get("ind").toString());
 					}
 				}
-			}catch(Exception e) {}
-		}catch(Exception e) {}
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		logger.debug("Found types: " + foundTypes);
 		for(int i = 0 ; i <foundTypes.size();i++) {			
 				Map<String, Object> eventMap = new HashMap<String, Object>();
 				eventMap.put("ts", System.currentTimeMillis());
@@ -194,7 +204,7 @@ public class EsperCEPComp implements CEPInf {
 									}
 								}
 							}
-							String syntax = "TURTLE"; // also try "N-TRIPLE" and "TURTLE"
+							String syntax = "RDF/XML"; // also try "N-TRIPLE" and "TURTLE"
 							StringWriter out = new StringWriter();
 							cepResult.write(out, syntax);
 							String resultString = out.toString();
@@ -206,6 +216,12 @@ public class EsperCEPComp implements CEPInf {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	@Override
+	public void stop() {
+		// TODO Auto-generated method stub
+		this.epService.destroy();
 	}
 
 }

@@ -54,4 +54,10 @@ public class HTTPPostSink implements SinkInf {
 		
 	}
 
+	@Override
+	public void stop() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

@@ -33,13 +33,14 @@ public class EsperWindow implements WindowInf {
 	private EPRuntime cepRT;
 	private ListenerInf listener;
 	private int counter;
+	private EPServiceProvider cep;
 	@Override
 	public boolean addEvent(String event) {
 		this.advanceTime(System.currentTimeMillis());
 		Model dataModel = ModelFactory.createDefaultModel();
 		try {
 			InputStream targetStream = new ByteArrayInputStream(event.getBytes());
-			dataModel.read(targetStream,"TTL");
+			dataModel.read(targetStream,null,"TTL");
 			StmtIterator it = dataModel.listStatements();
 			List<Statement> statements = new ArrayList<Statement>();
 			while (it.hasNext()) {
@@ -92,13 +93,13 @@ public class EsperWindow implements WindowInf {
 		cep_config.getEngineDefaults().getMetricsReporting().setEnableMetricsReporting(true);
 		cep_config.getEngineDefaults().getLogging().setEnableQueryPlan(true);
 
-		EPServiceProvider cep = EPServiceProviderManager.getDefaultProvider(cep_config);
+		this.cep = EPServiceProviderManager.getDefaultProvider(cep_config);
 		this.cepRT = cep.getEPRuntime();
 		EPAdministrator cepAdm = cep.getEPAdministrator();
 		EPServiceProvider epService = EPServiceProviderManager.getDefaultProvider();
 		EPDeploymentAdmin deployAdmin = cepAdm.getDeploymentAdmin();
 		cep.getEPAdministrator().getConfiguration().addEventType(GraphEvent.class);
-
+		
 		String eplStatement = String.format("select * from GraphEvent#time(%s sec) output snapshot every %s seconds",
 				windowSize, windowSlide);
 
@@ -134,11 +135,17 @@ public class EsperWindow implements WindowInf {
 	private String convertToStringEvent(List<Statement> statements) {
 		Model result = ModelFactory.createDefaultModel();
 		result.add(statements);
-		String syntax = "RDF/XML"; // also try "N-TRIPLE" and "TURTLE"
+		String syntax = "TTL"; // also try "N-TRIPLE" and "TURTLE"
 		StringWriter out = new StringWriter();
 		result.write(out, syntax);
 		String resultString = out.toString();
 		return resultString;
+	}
+
+	@Override
+	public void stop() {
+		// TODO Auto-generated method stub
+		this.cep.getEPAdministrator().destroyAllStatements();
 	}
 
 }

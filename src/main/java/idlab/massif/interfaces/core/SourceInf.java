@@ -1,5 +1,5 @@
 package idlab.massif.interfaces.core;
 
-public interface SourceInf {
+public interface SourceInf extends PipeLineElement{
 
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+    <uri id="Imports Wizard Entry" name="http://IBCNServices.github.io/influenza.owl" uri="static.owl"/>
+    <uri id="Imports Wizard Entry" name="http://IBCNServices.github.io/homelab.owl" uri="static.owl"/>
+    <group id="Folder Repository, directory=, recursive=true, Auto-Update=true, version=2" prefer="public" xml:base="">
+        <uri id="Automatically generated entry, Timestamp=1567156089040" name="duplicate:http://IBCNServices.github.io/Accio-Ontology/ontologies/ssn" uri="influenza.owl"/>
+        <uri id="Automatically generated entry, Timestamp=1567156089040" name="duplicate:http://IBCNServices.github.io/Accio-Ontology/ontologies/ssn" uri="static.owl"/>
+        <uri id="Automatically generated entry, Timestamp=1567156089040" name="duplicate:http://IBCNServices.github.io/homelabPlus.owl" uri="stream.xml"/>
+        <uri id="Automatically generated entry, Timestamp=1567156089040" name="duplicate:http://IBCNServices.github.io/homelabPlus.owl" uri="observation_example.xml"/>
+    </group>
+</catalog>

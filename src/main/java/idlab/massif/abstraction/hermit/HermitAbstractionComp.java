@@ -1,5 +1,7 @@
 package idlab.massif.abstraction.hermit;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -25,6 +27,8 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.reasoner.NodeSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import idlab.massif.abstraction.hermit.utils.DLQueryParser;
 import idlab.massif.interfaces.core.AbstractionInf;
@@ -37,11 +41,15 @@ public class HermitAbstractionComp implements AbstractionInf {
 	private Reasoner reasoner;
 	private OWLDataFactory factory;
 	private static String EVENT_IRI = "http://idlab.massif.be/EVENT";
+	private static String ONTOLOGY_IRI = "http://idlab.massif.be/abstraction.owl#";
+
 	private ListenerInf listener;
 	private DLQueryParser parser;
 	private int queryCounter = 0;
 	private Map<String, Integer> queryIDMapper;
 	private Set<String> queries;
+
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	public HermitAbstractionComp() {
 		this.queryIDMapper = new HashMap<String, Integer>();
@@ -50,14 +58,7 @@ public class HermitAbstractionComp implements AbstractionInf {
 
 	public HermitAbstractionComp(OWLOntology ontology) {
 		this();
-		// load ontology
-		this.manager = ontology.getOWLOntologyManager();
-		this.ontology = ontology;
-		// initiate the reasoner
-		initiateReasoner();
-		this.parser = new DLQueryParser(ontology);
-		
-
+		setOntology(ontology);
 	}
 
 	public HermitAbstractionComp(String ontologyIRI) {
@@ -89,13 +90,24 @@ public class HermitAbstractionComp implements AbstractionInf {
 	}
 
 	public void addEvent(Set<OWLAxiom> event) {
+		
+		System.out.println(event);
 		Set<Map<Integer, String>> activatedQueries = new HashSet<Map<Integer, String>>();
 		synchronized (ontology) {
 			manager.addAxioms(ontology, event);
+			try {
+			File file = new File("/tmp/newfile.owl");
+			FileOutputStream fop = new FileOutputStream(file);
+			manager.saveOntology(ontology, fop);
+			}catch(Exception e) {
+				
+			}
+			initiateReasoner();
 
 			reasoner.flush();
 			OWLClass messageClass = factory.getOWLClass(EVENT_IRI);
 			NodeSet<OWLNamedIndividual> eventIndividuals = reasoner.getInstances(messageClass, false);
+			logger.debug("Found abstract events: " + eventIndividuals);
 			for (OWLNamedIndividual eventInd : eventIndividuals.getFlattened()) {
 				if (event.toString().contains(eventInd.toString())) {
 
@@ -106,8 +118,7 @@ public class HermitAbstractionComp implements AbstractionInf {
 						if (queries.contains(clss)) {
 							// add abstract class to event
 							event.add(factory.getOWLClassAssertionAxiom(owlclss, eventInd));
-							Map<Integer, String> eventMapping = new HashMap<Integer, String>(
-									1);
+							Map<Integer, String> eventMapping = new HashMap<Integer, String>(1);
 							eventMapping.put(queryIDMapper.get(clss), clss);
 							activatedQueries.add(eventMapping);
 
@@ -116,6 +127,8 @@ public class HermitAbstractionComp implements AbstractionInf {
 
 				}
 			}
+			manager.removeAxioms(ontology, event);
+
 		}
 		if (!activatedQueries.isEmpty()) {
 			String eventStr = "";
@@ -124,6 +137,7 @@ public class HermitAbstractionComp implements AbstractionInf {
 				manager.addAxioms(eventOnt, event);
 				StringDocumentTarget target = new StringDocumentTarget();
 				manager.saveOntology(eventOnt, target);
+
 				eventStr = target.toString();
 			} catch (OWLOntologyCreationException | OWLOntologyStorageException e) {
 				// TODO Auto-generated catch block
@@ -144,6 +158,15 @@ public class HermitAbstractionComp implements AbstractionInf {
 		// load ontology
 		this.manager = ontology.getOWLOntologyManager();
 		this.ontology = ontology;
+		if(!this.ontology.getOntologyID().getOntologyIRI().isPresent()) {
+			try {
+				this.ontology = manager.createOntology(IRI.create(ONTOLOGY_IRI));
+				manager.addAxioms(this.ontology, ontology.getAxioms());
+			} catch (OWLOntologyCreationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		// initiate the reasoner
 		initiateReasoner();
 		this.parser = new DLQueryParser(ontology);
@@ -152,6 +175,12 @@ public class HermitAbstractionComp implements AbstractionInf {
 
 	@Override
 	public boolean addEvent(String triples) {
+		// add import to event
+		if (ontology.getOntologyID().getOntologyIRI().isPresent()) {
+			triples += "\n[ rdf:type owl:Ontology ;\n" + "   owl:imports <"
+					+ ontology.getOntologyID().getOntologyIRI().get() + ">\n" + " ] .";
+		}
+		logger.debug("Received message: " + triples);
 		// load event
 		OWLOntology eventOnt;
 		try {
@@ -198,10 +227,16 @@ public class HermitAbstractionComp implements AbstractionInf {
 				queryCounter++;
 				queries.add(newClass);
 			}
-			return queryCounter-1;
+			return queryCounter - 1;
 		} else {
 			return -1;
 		}
+	}
+
+	@Override
+	public void stop() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

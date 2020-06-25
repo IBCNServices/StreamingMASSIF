@@ -137,7 +137,11 @@ public class EsperCEPImpl implements CEPInf{
 		// TODO Auto-generated method stub
 		return 0;
 	}
-
+	@Override
+	public void stop() {
+		// TODO Auto-generated method stub
+		this.epService.destroy();
+	}
 	
 	
 }

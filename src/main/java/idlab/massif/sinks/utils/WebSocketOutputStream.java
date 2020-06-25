@@ -20,6 +20,7 @@ public class WebSocketOutputStream {
 	}
     @OnWebSocketConnect
     public void connected(Session session) {
+    	
     	System.out.println("connecting");
     	if(!sessions.contains(session)) {
     		sessions.add(session);  		
@@ -42,11 +43,17 @@ public class WebSocketOutputStream {
     	System.out.println("sending");
     	for(Session session: sessions) {
     		try {
+    			
 				session.getRemote().sendString(event);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+    	}
+    }
+    public void close() {
+    	for(Session session: sessions) {
+    		session.close();
     	}
     }
 

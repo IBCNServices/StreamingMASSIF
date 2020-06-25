@@ -53,5 +53,10 @@ public class WebSocketClientSink implements SinkInf {
 		// TODO Auto-generated method stub
 		
 	}
+	@Override
+	public void stop() {
+		// TODO Auto-generated method stub
+		this.socket.close();
+	}
 
 }

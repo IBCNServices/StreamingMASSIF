@@ -1,5 +1,6 @@
 package idlab.massif.pipeline;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,7 +28,7 @@ import idlab.massif.sinks.PrintSink;
 import idlab.massif.sources.FileSource;
 import idlab.massif.window.esper.EsperWindow;
 
-public class PipeLineTest {
+public class StreamingMASSIFTest {
 
 	@Test
 	public void test() throws InterruptedException, OWLOntologyCreationException {
@@ -37,12 +38,44 @@ public class PipeLineTest {
 		window.start();
 		
 		//define filter
-		String query = "PREFIX : <http://streamreasoning.org/iminds/massif/> " 
-				+ "CONSTRUCT{?work ?pred ?type.} "
-		// + "{?work <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>
-		// <http://dbpedia.org/ontology/Work>.} "
-				+ "WHERE  {  ?work ?pred ?type. }";
+		String query = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" + 
+				"PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" + 
+				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" + 
+				"PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" + 
+				"PREFIX ssn: <http://IBCNServices.github.io/Accio-Ontology/ontologies/ssn#>\n" + 
+				"PREFIX dul: <http://IBCNServices.github.io/Accio-Ontology/ontologies/DUL.owl#>\n" + 
+				"CONSTRUCT {\n" + 
+					"	?sensor rdf:type <http://IBCNServices.github.io/Accio-Ontology/SSNiot#TemperatureSensor>.\n" + 
+					"	?sensor <http://IBCNServices.github.io/Accio-Ontology/ontologies/DUL.owl#hasLocation> ?loc.\n" + 
+					"	?sensor <http://IBCNServices.github.io/homelab.owl#hasIntensity> ?intensity.\n" + 
+					"	?patient <http://IBCNServices.github.io/Accio-Ontology/ontologies/DUL.owl#hasLocation> ?loc.\n" + 
+					"	?patient <http://IBCNServices.github.io/homelab.owl#hasDisease> ?disease.\n" + 
+					"	?disease <http://IBCNServices.github.io/homelab.owl#hasStimulusSensitivity> ?sensitivity.\n" + 
+					"	?sensitivity <http://IBCNServices.github.io/Accio-Ontology/ontologies/ssn#observedProperty> ?intensity.\n" + 
+					"\n" + 
+					"	?observation ?obP ?obO." +
+					 "?observation ssn:observedBy ?sensor.\n" + 
+					"	?observation ssn:hasValue ?result.\n" + 
+					"	?result ?rP ?rO.\n" + 
+					"}\n" +
+				"WHERE {\n" + 
+				"	?sensor rdf:type <http://IBCNServices.github.io/Accio-Ontology/SSNiot#TemperatureSensor>.\n" + 
+				"	?sensor <http://IBCNServices.github.io/Accio-Ontology/ontologies/DUL.owl#hasLocation> ?loc.\n" + 
+				"	?sensor <http://IBCNServices.github.io/homelab.owl#hasIntensity> ?intensity.\n" + 
+				"	?patient <http://IBCNServices.github.io/Accio-Ontology/ontologies/DUL.owl#hasLocation> ?loc.\n" + 
+				"	?patient <http://IBCNServices.github.io/homelab.owl#hasDisease> ?disease.\n" + 
+				"	?disease <http://IBCNServices.github.io/homelab.owl#hasStimulusSensitivity> ?sensitivity.\n" + 
+				"	?sensitivity <http://IBCNServices.github.io/Accio-Ontology/ontologies/ssn#observedProperty> ?intensity.\n" + 
+				"\n" + 
+				"	?observation ssn:observedBy ?sensor.\n" +
+		
+				"	?observation ?obP ?obO." +
+
+				"	?observation ssn:hasValue ?result.\n" + 
+				"	?result ?rP ?rO.\n" + 
+				"}";
 		FilterInf filter = new JenaFilter();
+		filter.setStaticData("/Users/psbonte/Documents/Github/StreamingMASSIF/examples/influenza/static.owl");
 		int filterQueryID=filter.registerContinuousQuery(query);
 		filter.start();
 		//define the abstraction layer
@@ -50,24 +83,26 @@ public class PipeLineTest {
 
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new StringDocumentSource(ONT_STRING));
+		
+		ontology = manager.loadOntologyFromOntologyDocument(new File("/Users/psbonte/Documents/Github/StreamingMASSIF/examples/influenza/influenza.owl"));
 		abstractor.setOntology(ontology);
 		// register new DL query
-		String classExpressiona = "Observation and (observedProperty some Sound)";
+		String classExpressiona = "LowTemperatureObservation";// and (observedProperty some Temperature)";
 
-		String classExpressionb = "Observation and (observedProperty some LightIntensity)";
+		String classExpressionb = "HighTemperatureObservation ";//and (observedProperty some Temperature)";
 
-		String newHead = "http://massif.test/EventA";
-		String newHead2 = "http://massif.test/EventB";
+		String newHead = "http://massif.test/LowTemperatureEvent";
+		String newHead2 = "http://massif.test/HighTemperatureEvent";
 
 		int abstractionQueryID=abstractor.registerDLQuery(newHead, classExpressiona);
 		int abstractionQueryID2=abstractor.registerDLQuery(newHead2, classExpressionb);
 
 		//define CEP component
-		String querySub = "a=EventA -> b=EventB";
+		String querySub = "a=LowTemperatureEvent -> b=HighTemperatureEvent where timer:within(60 sec) ";
 		//querySub="a=GraphEvent";
 		Set<String> eventTypes = new HashSet<String>();
-		eventTypes.add("EventA");
-		eventTypes.add("EventB");
+		eventTypes.add("LowTemperatureEvent");
+		eventTypes.add("HighTemperatureEvent");
 		CEPInf cep = new EsperCEPComp();
 		Map<String,String> indMappings = new HashMap<String,String>();
 		indMappings.put("a","http://massif.test/hasComp");
@@ -95,10 +130,11 @@ public class PipeLineTest {
 //			windowComp.addEvent(ONT_EVENTb);
 //
 //		}
-		FileSource fsource = new FileSource("/tmp/file.xml",1000);
-		PipeLineComponent sourceComp = new PipeLineComponent(fsource,Collections.singletonList(windowComp));
+		FileSource fsource = new FileSource("/Users/psbonte/Documents/Github/StreamingMASSIF/examples/influenza/stream.xml",1000);
+		PipeLineComponent sourceComp = new PipeLineComponent(fsource,Collections.singletonList(filterComp));
 		fsource.stream();
 		
+		Thread.sleep(50000);
 	}
 	private static String ONT_EVENTa="<?xml version=\"1.0\"?>\n" + 
 			"<rdf:RDF xmlns=\"http://IBCNServices.github.io/homelabPlus.owl#\"\n" + 

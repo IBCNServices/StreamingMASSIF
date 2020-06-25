@@ -1,19 +1,24 @@
 package idlab.massif.sinks;
 
 import idlab.massif.interfaces.core.ListenerInf;
+
 import idlab.massif.interfaces.core.SinkInf;
 import idlab.massif.sinks.utils.WebSocketOutputStream;
+import spark.Service;
 import spark.Spark;
+
 
 public class WebSocketServerSink implements SinkInf{
 
 	private WebSocketOutputStream socket;
 
 	public WebSocketServerSink(int port, String wsURL) {
-		Spark.port(port);
+		Service ws = Service.ignite()
+       		 .port(port);
+		
 		this.socket = new WebSocketOutputStream();
-		Spark.webSocket("/"+wsURL, socket);
-		Spark.init();
+		ws.webSocket("/"+wsURL, socket);
+		ws.init();
 	}
 
 	
@@ -33,5 +38,12 @@ public class WebSocketServerSink implements SinkInf{
 	public void start() {
 		// TODO Auto-generated method stub
 		
+	}
+
+
+	@Override
+	public void stop() {
+		// TODO Auto-generated method stub
+		this.socket.close();
 	}
 }

@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://IBCNServices.github.io/homelabPlus.owl#"
+     xml:base="http://IBCNServices.github.io/homelabPlus.owl"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:ns="http://creativecommons.org/ns#"
+     xmlns:dul="http://IBCNServices.github.io/Accio-Ontology/ontologies/DUL.owl#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:ssn="http://IBCNServices.github.io/Accio-Ontology/ontologies/ssn#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:terms="http://purl.org/dc/terms/">
+    <owl:Ontology rdf:about="http://IBCNServices.github.io/homelabPlus2.owl">
+        <owl:imports rdf:resource="http://IBCNServices.github.io/homelab.owl"/>
+        <owl:imports rdf:resource="http://IBCNServices.github.io/influenza.owl"/>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://IBCNServices.github.io/homelabPlus2.owl#HighTemperatureObservation -->
+
+    <owl:Class rdf:about="http://IBCNServices.github.io/homelabPlus2.owl#HighTemperatureObservation">
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://IBCNServices.github.io/Accio-Ontology/ontologies/ssn#Observation"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://IBCNServices.github.io/Accio-Ontology/ontologies/ssn#hasValue"/>
+                        <owl:someValuesFrom>
+                            <owl:Restriction>
+                                <owl:onProperty rdf:resource="http://IBCNServices.github.io/Accio-Ontology/ontologies/DUL.owl#hasDataValue"/>
+                                <owl:someValuesFrom>
+                                    <rdfs:Datatype>
+                                        <owl:onDatatype rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+                                        <owl:withRestrictions rdf:parseType="Collection">
+                                            <rdf:Description>
+                                                <xsd:minExclusive rdf:datatype="http://www.w3.org/2001/XMLSchema#double">30.0</xsd:minExclusive>
+                                            </rdf:Description>
+                                        </owl:withRestrictions>
+                                    </rdfs:Datatype>
+                                </owl:someValuesFrom>
+                            </owl:Restriction>
+                        </owl:someValuesFrom>
+                    </owl:Restriction>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://IBCNServices.github.io/Accio-Ontology/ontologies/ssn#observedProperty"/>
+                        <owl:someValuesFrom rdf:resource="http://IBCNServices.github.io/Accio-Ontology/SSNiot#Temperature"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+        <rdfs:subClassOf rdf:resource="http://IBCNServices.github.io/Accio-Ontology/ontologies/ssn#Observation"/>
+    </owl:Class>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://IBCNServices.github.io/homelab.owl#temperatureIntensity -->
+
+    <owl:NamedIndividual rdf:about="http://IBCNServices.github.io/homelab.owl#temperatureIntensity"/>
+    
+
+
+    <!-- http://IBCNServices.github.io/homelabPlus.owl#observation -->
+
+    <owl:NamedIndividual rdf:about="http://IBCNServices.github.io/homelabPlus.owl#observation">
+        <rdf:type rdf:resource="http://IBCNServices.github.io/Accio-Ontology/ontologies/ssn#Observation"/>
+        <ssn:hasValue rdf:resource="http://IBCNServices.github.io/homelabPlus.owl#observationValue"/>
+        <ssn:observedBy rdf:resource="http://IBCNServices.github.io/homelab.owl#tempSensor1"/>
+        <ssn:observedProperty rdf:resource="http://IBCNServices.github.io/homelab.owl#temperatureIntensity"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://IBCNServices.github.io/homelabPlus.owl#observationValue -->
+
+    <owl:NamedIndividual rdf:about="http://IBCNServices.github.io/homelabPlus.owl#observationValue">
+        <rdf:type rdf:resource="http://IBCNServices.github.io/Accio-Ontology/SSNiot#TemperatureObservationValue"/>
+        <dul:hasDataValue rdf:datatype="http://www.w3.org/2001/XMLSchema#double">37.9</dul:hasDataValue>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://IBCNServices.github.io/homelabPlus2.owl#tempSensor1 -->
+
+    <owl:NamedIndividual rdf:about="http://IBCNServices.github.io/homelabPlus2.owl#tempSensor1">
+        <rdf:type rdf:resource="http://IBCNServices.github.io/Accio-Ontology/ontologies/ssn#Sensor"/>
+    </owl:NamedIndividual>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->
+
