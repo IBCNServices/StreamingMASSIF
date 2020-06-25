@@ -4,7 +4,7 @@ This is the implementation of the StreamingMASSIF platform, a streaming extensio
 
 StreamingMASSIF allows to perform cascading reasoning by combining various components. In its standard configuration it allows to filter meaningful events from a datastream through RDF Stream Processing, abstract the selection through DL reasoning and perform Complex Event Processing ontop of these abstraction.
 
-Check the [wikipage](https://github.com/pbonte/StreamingMASSIF/wiki) for a more in depth explanation on how to use Streaming MASSIF!
+Check the [wikipage](https://github.com/IBCNServices/StreamingMASSIF/wiki) for a more in depth explanation on how to use Streaming MASSIF!
 
 How to cite [Streaming MASSIF](https://www.mdpi.com/1424-8220/18/11/3832):
 ```
