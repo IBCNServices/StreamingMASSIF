@@ -28,6 +28,7 @@ import idlab.massif.sinks.HTTPGetCombinedSink;
 import idlab.massif.sinks.HTTPGetSink;
 import idlab.massif.sinks.PrintSink;
 import idlab.massif.sinks.WebSocketServerSink;
+import idlab.massif.sources.FileSource;
 import idlab.massif.sources.HTTPGetSource;
 import idlab.massif.sources.HTTPPostSource;
 import idlab.massif.sources.KafkaSource;
@@ -128,6 +129,10 @@ public class QueryParser {
 			if (impl.equals("httpgetsource")) {
 				HTTPGetSource getSource = new HTTPGetSource(comp.getString("url"), comp.getInt("timeout"));
 				pipeComp = new PipeLineComponent(getSource, Collections.EMPTY_LIST);
+			}
+			if (impl.equals("filesource")) {
+				SourceInf fileSource = new FileSource(comp.getString("fileName"), comp.getInt("timeout"));
+				pipeComp = new PipeLineComponent(fileSource, Collections.EMPTY_LIST);
 			}
 			break;
 		case "mapper":

@@ -1,0 +1,14 @@
+{
+  "components": {
+    "file":{"type":"Source","impl":"FileSource","fileName":"examples/sensors/input.stream","timeout":1000},
+    "print":{"type":"Sink","impl":"PrintSink"},
+    "window": {"type": "window","size": 10,"slide": 1},
+    "filter": {"type": "Filter","queries": ["CONSTRUCT{?s ?p ?p.} WHERE {?s ?p ?o}"]}
+  },
+  "configuration": {
+    "file": ["window"],
+    "window":["filter"],
+    "filter":["print"]
+    
+  }
+}

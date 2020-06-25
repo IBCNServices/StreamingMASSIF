@@ -20,6 +20,7 @@ public class FileSource implements SourceInf {
 	private PipeLine pipeline;
 	private long timeout;
 	private ListenerInf listener;
+	private boolean streaming=true;
 
 	public FileSource(String fileName, long timeout) {
 		this.fileName = fileName;
@@ -35,7 +36,7 @@ public class FileSource implements SourceInf {
 		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
 
 			String line;
-			while ((line = br.readLine()) != null) {
+			while ((line = br.readLine()) != null && streaming) {
 				if (listener != null) {
 					listener.notify(0, line);
 				}
@@ -70,12 +71,15 @@ public class FileSource implements SourceInf {
 	@Override
 	public void start() {
 		// TODO Auto-generated method stub
-
+		streaming = true;
+		new Thread(() -> this.stream()).start();
+		
 	}
+
 	@Override
 	public void stop() {
 		// TODO Auto-generated method stub
-
+		streaming = false;
 	}
 
 }
