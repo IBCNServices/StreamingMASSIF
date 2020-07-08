@@ -1,0 +1,48 @@
+<link href="libs/flowy/flowy.min.css" rel="stylesheet" />
+<script src="libs/flowy/flowy.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+<link rel="stylesheet" href="own.css">
+<script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
+
+<div id="canvas">
+</div>
+
+<div class="create-flowy">
+   Filter
+</div>
+
+<div class="create-flowy">
+   Window
+</div>
+
+<div class="create-flowy">
+   Source
+   <textarea></textarea>
+</div>a
+
+
+
+<button onclick="print()" />
+
+<script>
+    flowy(document.getElementById("canvas"));
+    function onGrab(block){
+        // do something
+    }
+    function onRelease(){
+        // do something
+    }
+    function onSnap(block, first, parent){
+        // do something
+    }
+
+    flowy($("#canvas"), onGrab, onRelease, onSnap)
+    var spacing_x = 20;
+    var spacing_y = 50;
+    flowy($("#canvas"), onGrab, onRelease, onSnap, spacing_x, spacing_y);
+    function print() {
+        console.log(JSON.stringify(flowy.output()));
+    }
+
+</script>
