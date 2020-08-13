@@ -194,8 +194,7 @@
                 stage.update();
             }
         }
-        function save(){
-
+        function generateConfig(){
             var config = {"configuration":outGoing,"components":{}};
             //extract the configs
             for (const [ key, value ] of Object.entries(typesMap)) {
@@ -252,6 +251,12 @@
                     }
                   }
             }
+            return config;
+
+        }
+        function save(){
+
+            var config = generateConfig();
             editMode=false;
             console.log(JSON.stringify(config));
             var xhr = new XMLHttpRequest();
@@ -327,6 +332,22 @@
         function showLoad(){
           var x = document.getElementById("loadWindow");
           x.style.display = "block";
+        }
+        function download(filename, text) {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+        }
+        function showConfig(){
+            var config = generateConfig();
+            download("config.json",JSON.stringify(config));
         }
         function hideLoad(){
           var x = document.getElementById("loadWindow");
@@ -451,6 +472,9 @@
       </a>
       <a class="navbar-item" onclick="showLoad()">
         Load
+      </a>
+      <a class="navbar-item" onclick="showConfig()">
+        Get Config
       </a>
 
       <div class="navbar-item has-dropdown is-hoverable">
