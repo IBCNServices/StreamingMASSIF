@@ -41,6 +41,7 @@ public class Run {
 	public Run() {
 		configs = new HashMap<String,PipeLineGraph>();
 		port(9000);
+		staticFileLocation("/web");
         get("/hello", (req, res) -> "MASSIF ONLINE");
         
         post("/register",(req, res) ->  register(req.body()));

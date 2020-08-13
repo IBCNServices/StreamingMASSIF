@@ -1,0 +1,111 @@
+
+
+{
+  "components": {
+    "comp1": {
+      "type": "Sink",
+      "impl": "PrintSink"
+    },
+    "sink2": {
+      "type": "Sink",
+      "impl": "HTTPGetSinkCombined",
+      "path":"sink",
+      "config":"last"
+    },
+    "comp2": {
+      "type": "window",
+      "size": 1,
+      "slide": 1
+    },
+    "comp3": {
+      "type": "Filter",
+      "queries": ["CONSTRUCT{?obs ?p ?o.} WHERE {?obs <http://www.w3.org/ns/sosa/observedProperty> <http://example.com/features/environment.light%3A%3Anumber/properties/environment.light%3A%3Anumber>; <http://www.w3.org/ns/sosa/madeBySensor> [  <http://example.com/sensors/has_location> <https://igentprojectLBD#space_21b36f84-98e4-4689-924f-112fb8dd0558>]. ?obs ?p ?o}"],
+      "ontology":"http://aaa-master.aaadev.wall2-ilabt-iminds-be.wall2.ilabt.iminds.be:30081/sensors.ttl"
+    },
+    "comp4": {
+      "type": "Abstract",
+      "expressions": [
+        {
+          "head": "http://massif.test/EventA",
+          "tail": "Observation"
+        }
+      ]
+    },
+    "comp5": {
+      "type": "Source",
+      "impl": "HTTPGetSource",
+      "url": "http://aaa-master.aaadev.wall2-ilabt-iminds-be.wall2.ilabt.iminds.be:30080/httpgetsink/sink",
+      "timeout": 1000
+    }
+  },
+  "configuration": {
+    "comp1": [],
+    "comp3": [
+      "comp1"
+    ],
+    "comp2": [
+      "comp3"
+    ],
+    "comp5": [
+      "comp2",
+      "sink2"
+    ],
+    "comp4": [
+      "comp1"
+    ]
+  }
+}
+
+{
+  "components": {
+    "print": {
+      "type": "Sink",
+      "impl": "PrintSink"
+    },
+    "window": {
+      "type": "window",
+      "size": 1,
+      "slide": 1
+    },
+    "filter": {
+      "type": "Filter",
+      "queries": ["CONSTRUCT{?s ?p ?p.} WHERE {?s ?p ?o}"]
+    },
+    "abstract": {
+      "type": "Abstract",
+      "expressions": [
+        {
+          "head": "http://massif.test/EventA",
+          "tail": "Observation"
+        }
+      ]
+    },
+    "kafka": {
+      "type": "Source",
+      "impl": "KafkaSource",
+      "kafkaServer": "kafka-headless.kafka:9092",
+      "kafkaTopic": "idlab.homelab.semantic"
+    },
+    "sink": {
+      "type": "Sink",
+      "impl": "HTTPGetSinkCombined",
+      "path":"sink",
+      "config":"last"
+    },
+  },
+  "configuration": {
+    "print": [],
+    "abstract": [
+      "print"
+    ],
+    "window": [
+      "filter"
+    ],
+    "kafka": [
+      "sink"
+    ],
+    "filter": [
+      "abstract"
+    ]
+  }
+}

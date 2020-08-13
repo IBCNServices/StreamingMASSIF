@@ -12,3 +12,18 @@
     
   }
 }
+
+{
+  "components": {
+    "0":{"type":"Source","impl":"FileSource","fileName":"examples/sensors/input.stream","timeout":1000},   
+    "2": {"type": "window","size": 10,"slide": 1},
+    "3": {"type": "Filter","queries": ["CONSTRUCT{?s ?p ?p.} WHERE {?s ?p ?o}"]},
+    "1":{"type":"Sink","impl":"PrintSink"}
+  },
+  "configuration": {
+    "0": ["2"],
+    "2":["3"],
+    "3":["1"]
+    
+  }
+}
