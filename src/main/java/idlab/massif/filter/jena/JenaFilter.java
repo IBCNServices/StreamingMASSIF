@@ -167,5 +167,19 @@ public class JenaFilter implements FilterInf {
 		// TODO Auto-generated method stub
 		this.infModel.removeAll();
 	}
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder(); 
+
+    str.append("{\"type\":\"Filter\",\"impl\":\"jena\",\"ontology\":\"http://test\",\"queries\":[");
+    for(int i = 0; i<queries.size();i++) {
+    	str.append("\"").append(queries.get(i).toString().replace("\n", "\\n")).append("\"");
+    	if(i<queries.size()-1) {
+    		str.append(",");
+    	}
+    }
+    str.append("]}}}");
+		return str.toString();
+	}
 
 }

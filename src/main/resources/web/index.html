@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
     <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
-
+    <script src='https://cdn.plot.ly/plotly-latest.min.js'> </script>
     <script>
         var drawLine=false;
         var counter=0;
@@ -32,6 +32,26 @@
 
            drawLines();
             stage.update();
+            loadConfigs();
+        }
+        function loadConfigs(){
+            var xhr = new XMLHttpRequest();
+                // we defined the xhr
+
+                xhr.onreadystatechange = function () {
+                    if (this.readyState != 4) return;
+
+                    if (this.status == 200) {
+                        console.log(this.responseText);
+                        var data = JSON.parse(this.responseText);
+                       console.log(data);
+                        // we get the returned data
+                    }
+                    // end of state change: it can be after some time (async)
+                };
+
+                xhr.open('GET', 'http://localhost:9000/configs', true);
+                xhr.send();
         }
         function press(evt) {
                 // currentTarget will be the container that the event listener was added to:
@@ -133,6 +153,12 @@
                 var elem = document.querySelector('#cepInfo');
 
             }
+            if(type=='mapper'){
+                circle.graphics.beginFill("pink").drawRoundRect(-50, -50, 100, 70,10);
+                var text='Mapper';
+                var elem = document.querySelector('#mapperInfo');
+
+            }
             if(type=='sink') {
                 circle.graphics.beginFill("black").drawCircle(0, 0, 30);
                 var text = 'Sink';
@@ -224,7 +250,13 @@
                     var query = elem.getElementsByTagName('textarea')[0].value;
                     config.components[key]={"type": "Filter","impl": "jena","ontology": ontUrl,"queries":[query]};
                     
-                }else if(value==='Abstractor'){
+                }else if(value==='Mapper'){
+                    var keepHeader = elem.getElementsByTagName('input')[0].checked;
+                    var query = elem.getElementsByTagName('textarea')[0].value;
+                    config.components[key]={"type": "Mapper","keepHeader": keepHeader,"mapping":query};
+                    
+                }
+                else if(value==='Abstractor'){
                     var ontUrl = elem.getElementsByTagName('input')[0].value;
                     var head = elem.getElementsByTagName('input')[1].value;
                     var tail = elem.getElementsByTagName('input')[2].value;
@@ -250,6 +282,11 @@
                         config.components[key]={"type": "Sink","impl": selectedInput,"path": key,"config":input2};
                     }
                   }
+                else if(value=='CEP'){
+                    var query = elem.getElementsByTagName('textarea')[0].value;
+                    var classes = elem.getElementsByTagName('input')[0].value;
+                    config.components[key]={"type": "CEP","query": query,"classes":classes};
+                }
             }
             return config;
 
@@ -371,10 +408,8 @@
           typesMap={};
           editMode=true;
         }
-        function loadConfig(){
-          clearAll();
-          var config = JSON.parse(document.getElementById("configInput").value);
-          for (const [key, values] of Object.entries(config["components"])) {
+        function parseConfig(config){
+            for (const [key, values] of Object.entries(config["components"])) {
             console.log(`${key}: ${values}`);
             //draw on canvas
             add(values["type"].toLowerCase());
@@ -439,10 +474,95 @@
           }
           //connect
           outGoing=config["configuration"];
+        }
+        function loadConfig(){
+          clearAll();
+          var config = JSON.parse(document.getElementById("configInput").value);
+          parseConfig(config);
           startFrom=null;
           drawLines();
           stage.update();
           hideLoad();
+        }
+        function toTable(row,rowType){
+            var rowContent = row.split(",");
+            var newRow ="<tr>";
+            for (index = 0; index < rowContent.length; index++) { 
+                newRow+="<"+rowType+">"+rowContent[index]+"</"+rowType+">"; 
+            } 
+            newRow+="</tr>";
+            return newRow;
+        }
+       function getInputData(){
+            var x = document.getElementById(selected.name);
+            var inputData = x.getElementsByTagName('textarea')[0].value;
+            inputData = inputData.substring(2,inputData.length-2);
+            console.log(inputData);
+            
+            var tableContent = document.getElementById("tableContent");
+            var splitChar="\",\"";
+            if(inputData.includes("\\n")){
+                splitChar="\\n";
+            }
+            var lines = inputData.split(splitChar);
+            return lines;
+        }
+        function viewTable(){
+            var modal = document.getElementById("viewTable");
+            var lines = getInputData();
+            modal.style.display = "block";
+            tableContent.innerHTML="  <thead>"+toTable(lines[0],"th")+"</thead>";
+            tableContent.innerHTML+="<tbody>";
+            for (rowCounter = 1; rowCounter < lines.length && rowCounter < 500; rowCounter++) { 
+                tableContent.innerHTML+=toTable(lines[rowCounter],"td");
+            } 
+            tableContent.innerHTML+="</tbody>";
+        }
+        function closeTable(){
+            var modal = document.getElementById("viewTable");
+            modal.style.display = "none";
+        }
+        function fillStream(){
+            var lines = getInputData();
+            var selection = document.getElementById("streamSelection");
+            var selectionID=selection.value;
+            var selectedData= [];
+            for (rowCounter = 1; rowCounter < lines.length && rowCounter < 500; rowCounter++) { 
+                var currentLine = lines[rowCounter].split(',');
+                if(!isNaN(currentLine[selectionID])){
+                    selectedData.push(currentLine[selectionID]);
+                }
+            } 
+            var data = [
+              {
+             
+                y: selectedData,
+                type: 'scatter'
+              }
+            ];
+
+            Plotly.newPlot('streamDiv', data);
+        }
+        function viewStream(){
+            var modal = document.getElementById("viewStream");
+            modal.style.display = "block";
+
+            
+            var lines = getInputData();
+            var selection = document.getElementById("streamSelection");
+            
+            var rowContent = lines[0].split(",");
+            var newOption ="";
+            for (index = 0; index < rowContent.length; index++) { 
+                newOption+="<option value=\""+index+"\">"+rowContent[index]+"</option>"; 
+            } 
+            selection.innerHTML=newOption;
+
+            
+        }
+        function closeStream(){
+            var modal = document.getElementById("viewStream");
+            modal.style.display = "none";
         }
     </script>
 </head>
@@ -515,7 +635,14 @@
   </div>
 </nav>
 
-
+<div class="tabs">
+  <ul>
+    <li class="is-active"><a>New</a></li>
+    <li><a>1</a></li>
+    <li><a>2</a></li>
+    <li><a>3</a></li>
+  </ul>
+</div>
 <div class="tile is-ancestor">
   <div class="tile is-4 is-vertical is-parent">
     <div class="tile is-child box">
@@ -528,6 +655,7 @@
         <button class="button" onclick="add('abstractor')">Abstractor</button>
         <button class="button" onclick="add('cep')">CEP</button>
         <button class="button" onclick="add('sink')">Sink</button>
+        <button class="button" onclick="add('mapper')">Mapper</button>
         <!--<button class="button" onclick="toggleLine()">Line</button>-->
     </div>
 <button class="button" onclick="deleteComp()">Delete Selection</button>
@@ -559,6 +687,14 @@
           <textarea class="textarea" placeholder="SPARQL Queries"></textarea>
 
     </div>
+    <div id="mapperInfo" style="display:none;">
+          <label class="checkbox">
+              <input type="checkbox">
+              Remember header
+            </label>
+          <textarea class="textarea" placeholder="Mapping definition"></textarea>
+
+    </div>
     <div id="abstractInfo" style="display:none;">
           <input class="input" type="text" placeholder="Ontology URL">
           <input class="input" type="text" placeholder="Head">
@@ -567,7 +703,7 @@
     </div>
     <div id="cepInfo" style="display:none;">
           <textarea class="textarea" placeholder="CEP Queries"></textarea>
-
+          <input class="input" type="text" placeholder="CEP classes">
     </div>
           <div id="sinkInfo" style="display:none;">
       <div class="control">
@@ -587,6 +723,8 @@
           <input class="input" type="text" placeholder="Timeout">
           <textarea class="textarea" placeholder="Output will be loaded here"></textarea>
           <button onclick="loadSinkData()">Load Sink Data</button>
+          <button onclick="viewTable()">View As Table</button>
+          <button onclick="viewStream()">View As Stream</button>
     </div>
       
   <div>
@@ -648,6 +786,29 @@
       <button class="button" onclick="hideLoad()">Cancel</button>
     </footer>
   </div>
+</div>
+<div class="modal" id="viewTable">
+  <div class="modal-background"></div>
+  <div class="modal-content">
+    <table class="table" id="tableContent">
+
+  
+</table>
+  </div>
+  <button class="modal-close is-large" aria-label="close" onclick="closeTable()"></button>
+</div>
+
+<div class="modal" id="viewStream">
+  <div class="modal-background"></div>
+  <div class="modal-content">
+    <div class="select">
+     <select id="streamSelection"  onchange="fillStream()">
+        
+      </select>
+    </div>
+    <div id='streamDiv'></div>
+  </div>
+  <button class="modal-close is-large" aria-label="close" onclick="closeStream()"></button>
 </div>
 <footer class="footer">
   <div class="content has-text-centered">

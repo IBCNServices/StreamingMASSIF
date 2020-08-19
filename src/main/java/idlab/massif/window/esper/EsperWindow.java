@@ -147,5 +147,9 @@ public class EsperWindow implements WindowInf {
 		// TODO Auto-generated method stub
 		this.cep.getEPAdministrator().destroyAllStatements();
 	}
+	@Override
+	public String toString() {
+		return String.format("{\"type\":\"window\",\"size\":%d,\"slide\":%d}",windowSize,windowSlide);
+	}
 
 }

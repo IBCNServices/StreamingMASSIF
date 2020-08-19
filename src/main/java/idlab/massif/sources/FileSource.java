@@ -81,5 +81,9 @@ public class FileSource implements SourceInf {
 		// TODO Auto-generated method stub
 		streaming = false;
 	}
+	@Override 
+	public String toString() {
+		return String.format("{\"type\":\"Source\",\"impl\":\"fileSource\",\"fileName\":\"%s\",\"timeout\":%d}", fileName,timeout);
+	}
 
 }

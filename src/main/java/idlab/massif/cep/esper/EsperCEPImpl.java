@@ -29,7 +29,7 @@ public class EsperCEPImpl implements CEPInf{
 
 	}
 
-	public boolean registerQuery(String query, Set<String> eventTypes, CEPListener listener) {
+	public boolean registerQuery(String query, Set<String> eventTypes, ListenerInf listener) {
 		this.acceptedEvents = eventTypes;
 		Map<String, Object> properties = new HashMap<String, Object>();
 		properties.put("packedId", "string");
@@ -71,15 +71,17 @@ public class EsperCEPImpl implements CEPInf{
 		if (longName.contains("#")) {
 			return longName.substring(longName.lastIndexOf('#') + 1);
 
-		} else {
+		} else if(longName.contains("/")){
 			return longName.substring(longName.lastIndexOf('/') + 1);
+		}else {
+			return longName;
 		}
 	}
 
 	private class EsperListener implements UpdateListener {
-		private CEPListener cepListener;
+		private ListenerInf cepListener;
 
-		public EsperListener(CEPListener cepListener) {
+		public EsperListener(ListenerInf cepListener) {
 			this.cepListener = cepListener;
 		}
 
@@ -103,7 +105,7 @@ public class EsperCEPImpl implements CEPInf{
 									}
 								}
 							}
-							cepListener.notify(cepResult);
+							cepListener.notify(0,cepResult.toString());
 						}
 					}
 				}
@@ -116,6 +118,11 @@ public class EsperCEPImpl implements CEPInf{
 	@Override
 	public boolean addEvent(String event) {
 		// TODO Auto-generated method stub
+		for(String eventType: acceptedEvents) {
+			if(event.contains(eventType)) {
+				this.addEvent(event, eventType);
+			}
+		}
 		return false;
 	}
 
@@ -141,6 +148,12 @@ public class EsperCEPImpl implements CEPInf{
 	public void stop() {
 		// TODO Auto-generated method stub
 		this.epService.destroy();
+	}
+
+	@Override
+	public boolean registerQuery(String CEPquery, Set<String> eventTypes, CEPListener listener) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 	
 	

@@ -3,6 +3,7 @@ package idlab.massif.run;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -46,6 +47,7 @@ public class Run {
         
         post("/register",(req, res) ->  register(req.body()));
         post("/stop",(req, res) ->  stop(req.body()));
+        get("/configs", (req, res) -> generateConfigs());
         //post("/send",(req, res) -> {engine.addEvent(req.body()); return res.status();});
         System.out.println("MASSIF ONLINE");
         
@@ -73,6 +75,15 @@ public class Run {
 
 	public void run() throws Exception {
 		
+	}
+	public String generateConfigs() {
+		StringBuilder str = new StringBuilder();
+		str.append("{");
+		for (Entry<String,PipeLineGraph> entry:configs.entrySet()) {
+			str.append("\"").append(entry.getKey()).append("\":").append(entry.getValue().toString()).append(",");
+		}
+		str.append("}");
+		return str.toString();
 	}
 
 	

@@ -111,5 +111,9 @@ public class HTTPGetCombinedSink implements SinkInf {
 		// TODO Auto-generated method stub
 		handler.removeRoute(path);
 	}
+	@Override
+	public String toString() {
+		return String.format("{\"type\":\"Sink\",\"impl\":\"httpGetSinkCombined\",\"path\":\"%s\",\"config\":\"\"}",path);
+	}
 
 }

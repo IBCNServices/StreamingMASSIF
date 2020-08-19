@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.semanticweb.HermiT.Configuration;
 import org.semanticweb.HermiT.Reasoner;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.io.StringDocumentSource;
 import org.semanticweb.owlapi.io.StringDocumentTarget;
 import org.semanticweb.owlapi.model.IRI;
@@ -37,8 +38,9 @@ public class HermitAbstractionImpl implements AbstractionInf {
 	private Reasoner reasoner;
 	private OWLDataFactory factory;
 	private static String EVENT_IRI = "http://idlab.massif.be/EVENT";
-	private Map<String, AbstractionListenerInf> listenerMapping;
+	private Map<String, ListenerInf> listenerMapping;
 	private DLQueryParser parser;
+	private ListenerInf listener;
 
 	public HermitAbstractionImpl() {
 		this.manager = OWLManager.createOWLOntologyManager();
@@ -58,7 +60,7 @@ public class HermitAbstractionImpl implements AbstractionInf {
 		// initiate the reasoner
 		initiateReasoner();
 		this.parser = new DLQueryParser(ontology);
-		this.listenerMapping = new HashMap<String, AbstractionListenerInf>();
+		this.listenerMapping = new HashMap<String, ListenerInf>();
 
 	}
 
@@ -84,7 +86,7 @@ public class HermitAbstractionImpl implements AbstractionInf {
 		this.factory = manager.getOWLDataFactory();
 	}
 
-	public boolean registerDLQuery(String newClass, String classExpression, AbstractionListenerInf listener) {
+	public boolean registerDLQuery(String newClass, String classExpression, ListenerInf listener) {
 		OWLClass messageClass = factory.getOWLClass(EVENT_IRI);
 		OWLClass newClassAxiom = factory.getOWLClass(newClass);
 		OWLSubClassOfAxiom subclassAxiom = factory.getOWLSubClassOfAxiom(newClassAxiom, messageClass);
@@ -102,7 +104,7 @@ public class HermitAbstractionImpl implements AbstractionInf {
 	}
 
 	public void addEvent(Set<OWLAxiom> event) {
-		Set<Map<AbstractionListenerInf, String>> activatedLsitener = new HashSet<Map<AbstractionListenerInf, String>>();
+		Set<Map<ListenerInf, String>> activatedLsitener = new HashSet<Map<ListenerInf, String>>();
 		synchronized (ontology) {
 			manager.addAxioms(ontology, event);
 			// TODO: fix reinitation!!!
@@ -121,7 +123,7 @@ public class HermitAbstractionImpl implements AbstractionInf {
 						if (listenerMapping.containsKey(clss)) {
 							// add abstract class to event
 							event.add(factory.getOWLClassAssertionAxiom(owlclss, eventInd));
-							Map<AbstractionListenerInf, String> eventMapping = new HashMap<AbstractionListenerInf, String>(
+							Map<ListenerInf, String> eventMapping = new HashMap<ListenerInf, String>(
 									1);
 							eventMapping.put(listenerMapping.get(clss), clss);
 							activatedLsitener.add(eventMapping);
@@ -138,16 +140,18 @@ public class HermitAbstractionImpl implements AbstractionInf {
 				OWLOntology eventOnt = manager.createOntology();
 				manager.addAxioms(eventOnt, event);
 				StringDocumentTarget target = new StringDocumentTarget();
-				manager.saveOntology(eventOnt, target);
+				TurtleDocumentFormat turtleFormat = new TurtleDocumentFormat();
+				manager.saveOntology(eventOnt,turtleFormat, target);
 				eventStr = target.toString();
 			} catch (OWLOntologyCreationException | OWLOntologyStorageException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
-			for (Map<AbstractionListenerInf, String> listenerMap : activatedLsitener) {
-				for (Entry<AbstractionListenerInf, String> ent : listenerMap.entrySet()) {
-					ent.getKey().notify(eventStr, ent.getValue());
+			for (Map<ListenerInf, String> listenerMap : activatedLsitener) {
+				for (Entry<ListenerInf, String> ent : listenerMap.entrySet()) {
+					//ent.getKey().notify(eventStr, ent.getValue());
+					ent.getKey().notify(0,eventStr);
 				}
 			}
 		}
@@ -162,7 +166,7 @@ public class HermitAbstractionImpl implements AbstractionInf {
 		// initiate the reasoner
 		initiateReasoner();
 		this.parser = new DLQueryParser(ontology);
-		this.listenerMapping = new HashMap<String, AbstractionListenerInf>();
+		this.listenerMapping = new HashMap<String, ListenerInf>();
 		return true;
 	}
 
@@ -188,6 +192,7 @@ public class HermitAbstractionImpl implements AbstractionInf {
 	@Override
 	public boolean addListener(ListenerInf listener) {
 		// TODO Auto-generated method stub
+		this.listener = listener;
 		return false;
 	}
 
@@ -200,6 +205,7 @@ public class HermitAbstractionImpl implements AbstractionInf {
 	@Override
 	public int registerDLQuery(String newClass, String classExpression) {
 		// TODO Auto-generated method stub
+		this.registerDLQuery(newClass, classExpression, this.listener);
 		return 0;
 	}
 
@@ -207,6 +213,12 @@ public class HermitAbstractionImpl implements AbstractionInf {
 	public void stop() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public boolean registerDLQuery(String newClass, String classExpression, AbstractionListenerInf listener) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 

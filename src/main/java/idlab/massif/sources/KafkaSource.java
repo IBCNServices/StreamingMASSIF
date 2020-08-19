@@ -126,4 +126,8 @@ public class KafkaSource implements SourceInf {
 	public void stop() {
 		streams.close();
 	}
+	@Override
+	public String toString() {
+		return String.format("{\"type\":\"Source\",\"impl\":\"kafkaSource\",\"kafkaServer\":\"%s\",\"kafkaTopic\":\"%s\"}", kafkaServer,kafkaTopic);
+	}
 }

@@ -1,9 +1,12 @@
 package idlab.massif.run;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -14,6 +17,7 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 
 import idlab.massif.abstraction.hermit.HermitAbstractionImpl;
+import idlab.massif.cep.esper.EsperCEPImpl;
 import idlab.massif.core.PipeLineComponent;
 import idlab.massif.core.PipeLineGraph;
 import idlab.massif.filter.jena.JenaFilter;
@@ -99,7 +103,11 @@ public class QueryParser {
 				OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 				OWLOntology ontology;
 				try {
-					ontology = manager.loadOntology(IRI.create(ontologyIRI));
+					if(ontologyIRI.startsWith("http")) {
+						ontology = manager.loadOntology(IRI.create(ontologyIRI));
+					}else {
+						ontology = manager.loadOntologyFromOntologyDocument(new File(ontologyIRI));
+					}
 					abstractor.setOntology(ontology);
 				} catch (OWLOntologyCreationException e) {
 					// TODO Auto-generated catch block
@@ -107,6 +115,7 @@ public class QueryParser {
 				}
 
 			}
+			pipeComp = new PipeLineComponent(compId,abstractor, Collections.EMPTY_LIST);
 			JSONArray queries = comp.getJSONArray("expressions");
 			for (int i = 0; i < queries.length(); i++) {
 				JSONObject exp = queries.getJSONObject(i);
@@ -114,7 +123,7 @@ public class QueryParser {
 				String tail = exp.getString("tail");
 				abstractor.registerDLQuery(head, tail);
 			}
-			pipeComp = new PipeLineComponent(compId,abstractor, Collections.EMPTY_LIST);
+			
 			break;
 		case "source":
 			impl = comp.getString("impl").toLowerCase();
@@ -137,8 +146,24 @@ public class QueryParser {
 			break;
 		case "mapper":
 			String mapping = comp.getString("mapping");
-			MapperInf mapper = new SimpleMapper(mapping);
+			boolean keepHeader = false;
+			if(comp.has("keepHeader")) {
+				keepHeader = comp.getBoolean("keepHeader");
+			}
+			MapperInf mapper = new SimpleMapper(mapping,keepHeader);
 			pipeComp = new PipeLineComponent(compId,mapper, Collections.EMPTY_LIST);
+			break;
+		case "cep":
+			String query = comp.getString("query");
+			String classes = comp.getString("classes");
+			EsperCEPImpl cepEngine = new EsperCEPImpl();
+			Set<String> eventTypes=new HashSet<String>();
+			classes = classes.replace(" ", "");
+			for(String claz:classes.split(",")) {
+				eventTypes.add(claz);
+			}
+			pipeComp = new PipeLineComponent(compId,cepEngine, Collections.EMPTY_LIST);
+			cepEngine.registerQuery(query, eventTypes, pipeComp);
 
 		}
 		return pipeComp;

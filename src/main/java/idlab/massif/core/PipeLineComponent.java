@@ -43,6 +43,9 @@ public class PipeLineComponent implements ListenerInf, MonitorInf {
 	public void setOutput(List<PipeLineComponent> output) {
 		this.output = output;
 	}
+	public List<PipeLineComponent> getOutputs(){
+		return this.output;
+	}
 	public void addEvent(String event) {
 		inEvents.getAndIncrement();
 		// add all arriving events to the queue
@@ -97,6 +100,9 @@ public class PipeLineComponent implements ListenerInf, MonitorInf {
 		return totalTime>0?(float)(((float)1000.0*outEvents.get())/(float)totalTime):0;
 	}
 	
+	public String getConfig() {
+		return element.toString();
+	}
 		
 
 }
