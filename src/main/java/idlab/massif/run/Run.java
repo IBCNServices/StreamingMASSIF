@@ -58,7 +58,11 @@ public class Run {
 		
 		return "ok";
 	}
+	public void stopPrevious() {
+		configs.values().forEach(g-> g.stop());
+	}
 	public  String register(String query) {
+		stopPrevious();
 		QueryParser parser = new QueryParser();
 		try {
 			PipeLineGraph graph = parser.parse(query);

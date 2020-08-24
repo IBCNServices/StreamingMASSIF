@@ -50,7 +50,7 @@
                     // end of state change: it can be after some time (async)
                 };
 
-                xhr.open('GET', 'http://localhost:9000/configs', true);
+                xhr.open('GET', '/configs', true);
                 xhr.send();
         }
         function press(evt) {
@@ -76,7 +76,7 @@
             }
         }
         function select(evt){
-            if(selected){
+            if(selected && typeof selected.name !=='string'){
                 selected.alpha=0.8;
             
             //hide current selection
@@ -84,12 +84,19 @@
             var x = document.getElementById(selected.name);
             x.style.display = "none";
               
+           }else{
+                var x = document.getElementById("lineInfoID");
+                x.style.display = "none";
            }
             selected=evt.currentTarget;
             selected.alpha=1;
+            drawLines();
             stage.update();
             if(typeof selected.name !=='string'){
                 var x = document.getElementById(selected.name);
+                x.style.display = "block";
+            }else{
+                var x = document.getElementById("lineInfoID");
                 x.style.display = "block";
             }
 
@@ -99,6 +106,7 @@
             //remove current lines
             lines.map(x=>stage.removeChild(x));
             lines.length=0;
+            
             //add new lines
             for (const [ key, value ] of Object.entries(outGoing)) {
                 for (i = 0; i < value.length; i++) {
@@ -108,9 +116,16 @@
 
                     // Add this line shape to the canvas
                     stage.addChild(line);
-                    line.graphics.setStrokeStyle(1).beginStroke("rgba(0,0,0,1)");
-                    line.graphics.moveTo(fromObj.x+50, fromObj.y);
+                    
                     line.name = 'line,' + key + ',' + value;
+                    //check if a line is selected
+                    if(selected && typeof selected.name =='string' && line.name==selected.name){
+                        line.graphics.setStrokeStyle(4).beginStroke("rgba(34, 167, 240, 1)");
+                    }else{
+                        //not selected
+                        line.graphics.setStrokeStyle(4).beginStroke("rgba(0,0,0,1)");                  
+                    }
+                    line.graphics.moveTo(fromObj.x+50, fromObj.y);
                     // Tell EaselJS where to draw the line to
                     line.graphics.lineTo(toObj.x-50, toObj.y);
                     line.on("click", select)
@@ -179,8 +194,8 @@
             label.y = -7;
 
             var dragger = new createjs.Container();
-            dragger.x = Object.keys(idToComp).length*50+50;
-            dragger.y = getRandomInt(450)+50;
+            dragger.x = (Object.keys(idToComp).length)*150+50;
+            dragger.y = getRandomInt(100)+50;
             dragger.addChild(circle, label);
             idToComp[currentId] = dragger;
             outGoing[currentId] = [];
@@ -216,8 +231,26 @@
                     }else{
                         outGoing[connectedIds[2]]=[];
                     }
+                }else{
+                    //delete all the outgoing edges from the deleted compoment
+                    outGoing[selected.name]=[];
+                    for (const [ key, value ] of Object.entries(outGoing)) {
+                        //check if any compoment has the deleted component in its outgoing components
+                        if(value.some(e=>e===String(selected.name) )){
+                            const index = value.indexOf(String(selected.name));
+                            if (index > -1) {
+                              value.splice(index, 1);
+                            }
+                        }
+                    }
+                    //delete the component from the mapping
+                    delete idToComp[selected.name];
+                    delete typesMap[selected.name];
+                    delete outGoing[selected.name];
                 }
+                drawLines();
                 stage.update();
+
             }
         }
         function generateConfig(){
@@ -307,14 +340,14 @@
                   }
                 }
             }
-            xhr.open("POST", 'http://localhost:9000/register', true);
+            xhr.open("POST", '/register', true);
             xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.send(JSON.stringify(config));
         }
         function deactivate(){
           if(queryID>-1 && !editMode){
             var xhr = new XMLHttpRequest();
-            xhr.open("POST", 'http://localhost:9000/stop', true);
+            xhr.open("POST", '/stop', true);
             xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.send(parseInt(queryID));
           }
@@ -329,15 +362,19 @@
 
                 if (this.status == 200) {
                     //var data = JSON.parse(this.responseText);
-                    console.log(this.responseText);
-                    var elem = document.getElementById(selected.name);
-                    elem.getElementsByTagName('textarea')[0].value = this.responseText;
+                    if(this.responseText.length > 100000){
+                        alert('Output too large! Load again or use last in sink options!')
+                    }else{
+                        console.log(this.responseText);
+                        var elem = document.getElementById(selected.name);
+                        elem.getElementsByTagName('textarea')[0].value = this.responseText;
+                }
                     // we get the returned data
                 }
                 // end of state change: it can be after some time (async)
             };
 
-            xhr.open('GET', 'http://localhost:9000/httpgetsink/'+selected.name, true);
+            xhr.open('GET', '/httpgetsink/'+selected.name, true);
             xhr.send();
           }
         }
@@ -362,7 +399,7 @@
                 // end of state change: it can be after some time (async)
             };
 
-            xhr.open('GET', 'http://localhost:9000/monitor/'+selected.name, true);
+            xhr.open('GET', '/monitor/'+selected.name, true);
             xhr.send();
           }
         }
@@ -422,18 +459,23 @@
                 }
                 else if(value==='source'){
                     var selectedInput = values["impl"].toLowerCase();
-                    var input1 = elem.getElementsByTagName('input')[0].value;
-                    var input2 = elem.getElementsByTagName('input')[1].value;
+                    var selectElem=elem.getElementsByTagName('select')[0];
                     if(selectedInput==="kafkasource"){
+                        console.log(selectElem.value);
+                        selectElem.value='kafkaSource';
+                        console.log(selectElem.value);
                         elem.getElementsByTagName('input')[0].value = values["kafkaServer"];
                         elem.getElementsByTagName('input')[1].value = values["kafkaTopic"];
                     }else if(selectedInput==="httppostsource"){
+                        selectElem.value='httpPostSource';
                       elem.getElementsByTagName('input')[0].value = values["path"];
                         elem.getElementsByTagName('input')[1].value = values["port"];
                     }else if(selectedInput==="httpgetsource"){
+                        selectElem.value='httpGetSource';
                         elem.getElementsByTagName('input')[0].value = values["url"];
                         elem.getElementsByTagName('input')[1].value = values["timeout"];
                     }else if(selectedInput==="filesource"){
+                        selectElem.value='fileSource';
                         elem.getElementsByTagName('input')[0].value = values["fileName"];
                         elem.getElementsByTagName('input')[1].value = values["timeout"];
                     }
@@ -448,24 +490,29 @@
                 }
                 else if(value==='sink'){
                     var selectedInput = values["impl"].toLowerCase();
-                    var input1 = elem.getElementsByTagName('input')[0].value;
-                    var input2 = elem.getElementsByTagName('input')[1].value;
+                    var selectElem=elem.getElementsByTagName('select')[0];
                     if(selectedInput==="kafkasink"){
+                        selectElem.value='kafkaSink';
                         elem.getElementsByTagName('input')[0].value = values["kafkaServer"];
                         elem.getElementsByTagName('input')[0].value = values["kafkaTopic"];
 
                     }else if(selectedInput==="httppostsink"){
+                        selectElem.value='httpPostSink';
                         elem.getElementsByTagName('input')[0].value = values["path"];
                         elem.getElementsByTagName('input')[0].value = values["port"];
                     }else if(selectedInput==="httpgetsink"){
+                        selectElem.value='httpGetSink';
                         elem.getElementsByTagName('input')[0].value = values["url"];
                         elem.getElementsByTagName('input')[0].value = values["timeout"];
                     }else if(selectedInput==="filesink"){
+                        selectElem.value='fileSink';
                         elem.getElementsByTagName('input')[0].value = values["fileName"];
                         elem.getElementsByTagName('input')[0].value = values["timeout"];
                     }else if(selectedInput==="printsink"){
                           //TODO
+                          selectElem.value='printSink';
                     }else if(selectedInput==="httpgetsinkcombined"){
+                        selectElem.value='httpGetSinkCombined';
                         elem.getElementsByTagName('input')[0].value = values["path"];
                         elem.getElementsByTagName('input')[0].value = values["config"];
                     }
@@ -726,6 +773,10 @@
           <button onclick="viewTable()">View As Table</button>
           <button onclick="viewStream()">View As Stream</button>
     </div>
+    <div id="lineInfoID" style="display:none;">
+          A connection has been selected.
+    </div>
+    
       
   <div>
   <nav class="level">
