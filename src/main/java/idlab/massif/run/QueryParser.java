@@ -15,11 +15,14 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import idlab.massif.abstraction.hermit.HermitAbstractionImpl;
 import idlab.massif.cep.esper.EsperCEPImpl;
 import idlab.massif.core.PipeLineComponent;
 import idlab.massif.core.PipeLineGraph;
+import idlab.massif.exceptions.QueryRegistrationException;
 import idlab.massif.filter.jena.JenaFilter;
 import idlab.massif.interfaces.core.AbstractionInf;
 import idlab.massif.interfaces.core.FilterInf;
@@ -39,8 +42,9 @@ import idlab.massif.sources.KafkaSource;
 import idlab.massif.window.esper.EsperWindow;
 
 public class QueryParser {
+	private static Logger logger = LoggerFactory.getLogger(QueryParser.class);
 
-	public static PipeLineComponent parseComponent(String compId,JSONObject comp) {
+	public static PipeLineComponent parseComponent(String compId, JSONObject comp) throws QueryRegistrationException{
 		String compType = comp.getString("type").toLowerCase();
 		PipeLineComponent pipeComp = null;
 		switch (compType) {
@@ -48,19 +52,19 @@ public class QueryParser {
 			String impl = comp.getString("impl").toLowerCase();
 			if (impl.equals("printsink")) {
 				SinkInf printSink = new PrintSink();
-				pipeComp = new PipeLineComponent(compId,printSink, Collections.EMPTY_LIST);
+				pipeComp = new PipeLineComponent(compId, printSink, Collections.EMPTY_LIST);
 			} else if (impl.equals("websocketsink")) {
 
 				SinkInf socketSink = new WebSocketServerSink(comp.getInt("port"), comp.getString("path"));
-				pipeComp = new PipeLineComponent(compId,socketSink, Collections.EMPTY_LIST);
+				pipeComp = new PipeLineComponent(compId, socketSink, Collections.EMPTY_LIST);
 			} else if (impl.equals("httpgetsink")) {
 
 				SinkInf getsink = new HTTPGetSink(comp.getString("path"), comp.getString("config"));
-				pipeComp = new PipeLineComponent(compId,getsink, Collections.EMPTY_LIST);
+				pipeComp = new PipeLineComponent(compId, getsink, Collections.EMPTY_LIST);
 			} else if (impl.equals("httpgetsinkcombined")) {
 
 				SinkInf getsink = new HTTPGetCombinedSink(comp.getString("path"), comp.getString("config"));
-				pipeComp = new PipeLineComponent(compId,getsink, Collections.EMPTY_LIST);
+				pipeComp = new PipeLineComponent(compId, getsink, Collections.EMPTY_LIST);
 			}
 			// code block
 			break;
@@ -77,10 +81,14 @@ public class QueryParser {
 				}
 				JSONArray queries = comp.getJSONArray("queries");
 				for (int i = 0; i < queries.length(); i++) {
-					int filterQueryID = filter.registerContinuousQuery(queries.getString(i));
+					try {
+						int filterQueryID = filter.registerContinuousQuery(queries.getString(i));
+					} catch (Exception e) {
+						throw new QueryRegistrationException(String.format("Unable to register filter:\n [%s].\n Parsing error: [%s]",queries.getString(i),e.getMessage()), e);
+					}
 				}
 				filter.start();
-				pipeComp = new PipeLineComponent(compId,filter, Collections.EMPTY_LIST);
+				pipeComp = new PipeLineComponent(compId, filter, Collections.EMPTY_LIST);
 			}
 			// code block
 			break;
@@ -93,7 +101,7 @@ public class QueryParser {
 			WindowInf window = new EsperWindow();
 			window.setWindowSize(size, slide);
 			window.start();
-			pipeComp = new PipeLineComponent(compId,window, Collections.EMPTY_LIST);
+			pipeComp = new PipeLineComponent(compId, window, Collections.EMPTY_LIST);
 			break;
 		case "abstract":
 			// code block
@@ -103,9 +111,9 @@ public class QueryParser {
 				OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 				OWLOntology ontology;
 				try {
-					if(ontologyIRI.startsWith("http")) {
+					if (ontologyIRI.startsWith("http")) {
 						ontology = manager.loadOntology(IRI.create(ontologyIRI));
-					}else {
+					} else {
 						ontology = manager.loadOntologyFromOntologyDocument(new File(ontologyIRI));
 					}
 					abstractor.setOntology(ontology);
@@ -115,7 +123,7 @@ public class QueryParser {
 				}
 
 			}
-			pipeComp = new PipeLineComponent(compId,abstractor, Collections.EMPTY_LIST);
+			pipeComp = new PipeLineComponent(compId, abstractor, Collections.EMPTY_LIST);
 			JSONArray queries = comp.getJSONArray("expressions");
 			for (int i = 0; i < queries.length(); i++) {
 				JSONObject exp = queries.getJSONObject(i);
@@ -123,53 +131,53 @@ public class QueryParser {
 				String tail = exp.getString("tail");
 				abstractor.registerDLQuery(head, tail);
 			}
-			
+
 			break;
 		case "source":
 			impl = comp.getString("impl").toLowerCase();
 			if (impl.equals("kafkasource")) {
 				KafkaSource kafkaSource = new KafkaSource(comp.getString("kafkaServer"), comp.getString("kafkaTopic"));
-				pipeComp = new PipeLineComponent(compId,kafkaSource, Collections.EMPTY_LIST);
+				pipeComp = new PipeLineComponent(compId, kafkaSource, Collections.EMPTY_LIST);
 			}
 			if (impl.equals("httppostsource")) {
 				HTTPPostSource postSource = new HTTPPostSource(comp.getString("path"), comp.getInt("port"));
-				pipeComp = new PipeLineComponent(compId,postSource, Collections.EMPTY_LIST);
+				pipeComp = new PipeLineComponent(compId, postSource, Collections.EMPTY_LIST);
 			}
 			if (impl.equals("httpgetsource")) {
 				HTTPGetSource getSource = new HTTPGetSource(comp.getString("url"), comp.getInt("timeout"));
-				pipeComp = new PipeLineComponent(compId,getSource, Collections.EMPTY_LIST);
+				pipeComp = new PipeLineComponent(compId, getSource, Collections.EMPTY_LIST);
 			}
 			if (impl.equals("filesource")) {
 				SourceInf fileSource = new FileSource(comp.getString("fileName"), comp.getInt("timeout"));
-				pipeComp = new PipeLineComponent(compId,fileSource, Collections.EMPTY_LIST);
+				pipeComp = new PipeLineComponent(compId, fileSource, Collections.EMPTY_LIST);
 			}
 			break;
 		case "mapper":
 			String mapping = comp.getString("mapping");
 			boolean keepHeader = false;
-			if(comp.has("keepHeader")) {
+			if (comp.has("keepHeader")) {
 				keepHeader = comp.getBoolean("keepHeader");
 			}
-			MapperInf mapper = new SimpleMapper(mapping,keepHeader);
-			pipeComp = new PipeLineComponent(compId,mapper, Collections.EMPTY_LIST);
+			MapperInf mapper = new SimpleMapper(mapping, keepHeader);
+			pipeComp = new PipeLineComponent(compId, mapper, Collections.EMPTY_LIST);
 			break;
 		case "cep":
 			String query = comp.getString("query");
 			String classes = comp.getString("classes");
 			EsperCEPImpl cepEngine = new EsperCEPImpl();
-			Set<String> eventTypes=new HashSet<String>();
+			Set<String> eventTypes = new HashSet<String>();
 			classes = classes.replace(" ", "");
-			for(String claz:classes.split(",")) {
+			for (String claz : classes.split(",")) {
 				eventTypes.add(claz);
 			}
-			pipeComp = new PipeLineComponent(compId,cepEngine, Collections.EMPTY_LIST);
+			pipeComp = new PipeLineComponent(compId, cepEngine, Collections.EMPTY_LIST);
 			cepEngine.registerQuery(query, eventTypes, pipeComp);
 
 		}
 		return pipeComp;
 	}
 
-	public static PipeLineGraph parse(String query) throws OWLOntologyCreationException {
+	public static PipeLineGraph parse(String query) throws QueryRegistrationException {
 		Map<String, PipeLineComponent> pipelineComponents = new HashMap<String, PipeLineComponent>();
 		JSONObject obj = new JSONObject(query);
 		if (!obj.has("components")) {
@@ -179,8 +187,8 @@ public class QueryParser {
 
 			for (String key : components.keySet()) {
 				JSONObject comp = components.getJSONObject(key);
-
-				pipelineComponents.put(key, parseComponent(key,comp));
+				pipelineComponents.put(key, parseComponent(key, comp));
+				
 			}
 		}
 		// configure the graph

@@ -6,6 +6,7 @@ public interface MonitorInf {
 	public long getEventsIn();
 	public long getEventsOut();
 	public float getThroughput();
+	public float getAvgTime();
 	
 
 }

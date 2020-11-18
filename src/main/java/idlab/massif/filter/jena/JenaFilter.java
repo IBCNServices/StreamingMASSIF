@@ -145,7 +145,7 @@ public class JenaFilter implements FilterInf {
 		this.infModel = ModelFactory.createDefaultModel();
 
 		try {
-			if (dataSource != null) {
+			if (dataSource != null && !dataSource.isEmpty()) {
 				this.infModel.read(dataSource, "TTL");
 			}
 			if (rules != null) {

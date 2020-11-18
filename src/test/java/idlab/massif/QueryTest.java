@@ -5,6 +5,7 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 import idlab.massif.core.PipeLine;
 import idlab.massif.core.PipeLineGraph;
+import idlab.massif.exceptions.QueryRegistrationException;
 import idlab.massif.interfaces.core.SelectionInf;
 import idlab.massif.run.QueryParser;
 
@@ -75,7 +76,7 @@ public class QueryTest {
 			PipeLineGraph engine = parser.parse(query3);
 			
 			
-		} catch (OWLOntologyCreationException e) {
+		} catch (QueryRegistrationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

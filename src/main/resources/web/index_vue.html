@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <link href="https://unpkg.com/@triply/yasgui/build/yasgui.min.css" rel="stylesheet" type="text/css" />
+  <script src="https://unpkg.com/@triply/yasgui/build/yasgui.min.js"></script>
+
+</head>
+<body >
+    <div id="app">
+    {{ message }}
+    </div>
+    <div id="blog-post-demo">
+        <blog-post
+          v-for="post in posts"
+          v-bind:key="post.id"
+          v-bind:post="post"
+        ></blog-post>
+    </div>
+    <div id="yasgui"></div>
+    <div id="yasre"></div>
+    <button onclick="getQuery()"> Get query</button>
+<script>
+
+        var app = new Vue({
+          el: '#app',
+          data: {
+            message: 'Hello Vue!'
+          }
+        })
+        Vue.component('blog-post', {
+          props: ['post'],
+          template: `
+            <div class="blog-post">
+              <h3>{{ post.title }}</h3>
+              <div v-html="post.content"></div>
+            </div>
+          `
+        })
+        var blogs = new Vue({
+          el: '#blog-post-demo',
+          data: {
+            posts: [
+              { id: 1, title: 'My journey with Vue' },
+              { id: 2, title: 'Blogging with Vue' },
+              { id: 3, title: 'Why Vue is so fun' }
+            ]
+          }
+        })
+            const yasgui = new Yasqe(document.getElementById("yasgui"));
+            
+        function getQuery(){
+            console.log(yasgui.getQueryWithValues());
+        }
+        const yasre = new Yasr(document.getElementById("yasre"));
+        var data ='["prop,t,\nhttp://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/ns/sosa/Sensor,\nhttp://www.w3.org/ns/sosa/observes,http://example.com/properties/environment.light,\n","prop,t,\n","prop,t,\n","prop,t,\n","prop,t,\nhttp://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/ns/sosa/Sensor,\nhttp://www.w3.org/ns/sosa/observes,http://example.com/properties/environment.light,\n","prop,t,\n","prop,t,\n","prop,t,\n","prop,t,\nhttp://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/ns/sosa/Sensor,\nhttp://www.w3.org/ns/sosa/observes,http://example.com/properties/environment.light,\n","prop,t,\n","prop,t,\n","prop,t,\n","prop,t,\nhttp://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/ns/sosa/Sensor,\nhttp://www.w3.org/ns/sosa/observes,http://example.com/properties/environment.light,\n","prop,t,\n","prop,t,\n","prop,t,\n","prop,t,\nhttp://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/ns/sosa/Sensor,\nhttp://www.w3.org/ns/sosa/observes,http://example.com/properties/environment.light,\n","prop,t,\n","prop,t,\n","prop,t,\n"]';
+        function formatData(){
+            data = data.substring(2,data.length-2);
+            var lines = data.split("\n");
+            var head = lines[0];
+            var headVars = head.split(",");
+            headVars.push("window");
+            
+            var results = [];
+            var windowCounter=0;
+            //iterate over remaining lines:
+            for (rowCounter = 1; rowCounter < lines.length ; rowCounter++) {
+                if(!lines[rowCounter].includes(head)){
+                    var currentResult ={};
+                    var result=lines[rowCounter].split(",");
+                    for(varCounter = 0 ; varCounter<result.length;varCounter++){
+                        currentResult[headVars[varCounter]]={type:"uri",value:result[varCounter]};
+                    }
+                    currentResult["window"]={type:"uri",value:windowCounter};
+                    results.push(currentResult);
+                }else{
+                    windowCounter++;
+                }
+            }
+            var response={head:{vars:headVars},results:{bindings:results}};
+            console.log(response);
+            yasre.setResponse(response);
+        }
+        formatData();
+
+    </script>
+<style>
+  .yasqe .yasqe_buttons {
+    display: none ;
+  }
+</style>
+
+</body>
+</html>

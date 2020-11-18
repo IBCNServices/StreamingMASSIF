@@ -37,6 +37,7 @@ public class FileSource implements SourceInf {
 
 			String line;
 			while ((line = br.readLine()) != null && streaming) {
+				line +="\n";
 				if (listener != null) {
 					listener.notify(0, line);
 				}

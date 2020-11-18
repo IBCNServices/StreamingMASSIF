@@ -84,7 +84,6 @@ public class KafkaSource implements SourceInf {
 		KStream<String, String> sensors = builder.stream(this.kafkaTopic, Consumed.with(Serdes.String(), Serdes.String()));
 		sensors
 		.foreach((key, value) -> {
-			System.out.println(value);
 			if(pipeline!=null) {
 				this.pipeline.addEvent(value);
 				}

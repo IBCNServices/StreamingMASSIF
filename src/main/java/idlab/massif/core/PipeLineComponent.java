@@ -103,6 +103,10 @@ public class PipeLineComponent implements ListenerInf, MonitorInf {
 	public String getConfig() {
 		return element.toString();
 	}
+	@Override
+	public float getAvgTime() {
+		return totalTime>0?(float)(((float)totalTime)/(float)outEvents.get()):0;
+	}
 		
 
 }

@@ -11,11 +11,14 @@ import org.semanticweb.owlapi.io.StringDocumentSource;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import idlab.massif.abstraction.hermit.HermitAbstractionImpl;
 import idlab.massif.cep.esper.EsperCEPImpl;
 import idlab.massif.core.PipeLine;
 import idlab.massif.core.PipeLineGraph;
+import idlab.massif.exceptions.QueryRegistrationException;
 import idlab.massif.interfaces.core.AbstractionInf;
 import idlab.massif.interfaces.core.AbstractionListenerInf;
 import idlab.massif.interfaces.core.CEPInf;
@@ -23,11 +26,15 @@ import idlab.massif.interfaces.core.CEPListener;
 import idlab.massif.interfaces.core.SelectionInf;
 import idlab.massif.interfaces.core.SelectionListenerInf;
 import idlab.massif.selection.csparql_basic.CSparqlSelectionImpl;
+import spark.Response;
+
 import static spark.Spark.*;
 import org.json.JSONObject;
 
 
 public class Run {
+	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+	
 	Map<String,PipeLineGraph> configs;
 	int configCounter = 0;
 	public static void main(String[] args) throws Exception {
@@ -40,40 +47,47 @@ public class Run {
 	private PipeLine engine;
 	
 	public Run() {
+		logger.info("MASSIF STARTING");
 		configs = new HashMap<String,PipeLineGraph>();
 		port(9000);
 		staticFileLocation("/web");
         get("/hello", (req, res) -> "MASSIF ONLINE");
         
-        post("/register",(req, res) ->  register(req.body()));
+        post("/register",(req, res) ->  register(req.body(),res));
         post("/stop",(req, res) ->  stop(req.body()));
         get("/configs", (req, res) -> generateConfigs());
         //post("/send",(req, res) -> {engine.addEvent(req.body()); return res.status();});
-        System.out.println("MASSIF ONLINE");
+        logger.info("MASSIF ONLINE");
         
 	}
 	public String stop(String queryID) {
 		PipeLineGraph g = configs.get(queryID);
 		g.stop();
-		
+		configs.remove(queryID);
+		logger.info("Deactivated QueryID {}",queryID);
 		return "ok";
 	}
 	public void stopPrevious() {
-		configs.values().forEach(g-> g.stop());
+		logger.debug("Stopping all configurations");
+		new HashSet<String>(configs.keySet()).forEach(k-> this.stop(k));
 	}
-	public  String register(String query) {
+	public  String register(String query,Response response) {
+		logger.info("Registering new Query {}",query);
 		stopPrevious();
 		QueryParser parser = new QueryParser();
 		try {
 			PipeLineGraph graph = parser.parse(query);
 			String id = ++configCounter+"";
 			configs.put(id, graph);
+			response.status(200);
 			return id;
-		} catch (OWLOntologyCreationException e) {
+		} catch (QueryRegistrationException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Unable to register Query {}",query,e);
+			response.status(400);
+			return e.getMessage();
 		}
-		return null;
+		
 
 	}
 

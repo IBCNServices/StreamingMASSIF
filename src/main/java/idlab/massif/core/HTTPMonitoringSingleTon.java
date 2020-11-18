@@ -38,6 +38,7 @@ public class HTTPMonitoringSingleTon {
 			results.put("eventsIn", eventSourceMap.get(id).getEventsIn());
 			results.put("eventsOut", eventSourceMap.get(id).getEventsOut());
 			results.put("throughput", eventSourceMap.get(id).getThroughput());
+			results.put("avgTime", eventSourceMap.get(id).getAvgTime());
 		}
 		;
 		return new JSONObject(results).toString();
