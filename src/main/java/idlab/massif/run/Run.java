@@ -27,6 +27,7 @@ import idlab.massif.interfaces.core.SelectionInf;
 import idlab.massif.interfaces.core.SelectionListenerInf;
 import idlab.massif.selection.csparql_basic.CSparqlSelectionImpl;
 import spark.Response;
+import spark.Spark;
 
 import static spark.Spark.*;
 import org.json.JSONObject;
@@ -37,6 +38,7 @@ public class Run {
 	
 	Map<String,PipeLineGraph> configs;
 	int configCounter = 0;
+	private String sinks = "[]";
 	public static void main(String[] args) throws Exception {
 		Run r = new Run();
 		r.run();
@@ -45,10 +47,12 @@ public class Run {
 	}
 
 	private PipeLine engine;
+	private QueryParser parser;
 	
 	public Run() {
 		logger.info("MASSIF STARTING");
 		configs = new HashMap<String,PipeLineGraph>();
+		parser =  new QueryParser();
 		port(9000);
 		staticFileLocation("/web");
         get("/hello", (req, res) -> "MASSIF ONLINE");
@@ -56,9 +60,20 @@ public class Run {
         post("/register",(req, res) ->  register(req.body(),res));
         post("/stop",(req, res) ->  stop(req.body()));
         get("/configs", (req, res) -> generateConfigs());
+        get("/sinks", (req, res) -> getSinks());
         //post("/send",(req, res) -> {engine.addEvent(req.body()); return res.status();});
         logger.info("MASSIF ONLINE");
         
+	}
+	public static void resetRoutes() {
+		Spark.stop();
+	}
+	public void setSinks(String sinks) {
+		this.sinks = sinks;
+	}
+	private String getSinks() {
+		// TODO Auto-generated method stub
+		return sinks;
 	}
 	public String stop(String queryID) {
 		PipeLineGraph g = configs.get(queryID);
@@ -74,7 +89,7 @@ public class Run {
 	public  String register(String query,Response response) {
 		logger.info("Registering new Query {}",query);
 		stopPrevious();
-		QueryParser parser = new QueryParser();
+		
 		try {
 			PipeLineGraph graph = parser.parse(query);
 			String id = ++configCounter+"";
@@ -101,7 +116,12 @@ public class Run {
 			str.append("\"").append(entry.getKey()).append("\":").append(entry.getValue().toString()).append(",");
 		}
 		str.append("}");
-		return str.toString();
+		String result = str.toString();
+		System.out.println(result);
+		return result;
+	}
+	public void registerGenericComponent(String parseName,Class clazz){
+		parser.registerGenericComponent(parseName, clazz);
 	}
 
 	

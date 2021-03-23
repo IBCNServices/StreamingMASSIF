@@ -37,6 +37,9 @@ public class SimpleMapper implements MapperInf {
 			input = builder.append(header).append("\n").append(input).toString();
 		}
 		String[] lines = input.split("\n");
+		if (lines.length == 1) {
+			lines = input.split("\\\\n");
+		}
 		String result = "";
 		if (lines.length > 1) {
 			String[] vars = lines[0].split(",");
@@ -49,7 +52,11 @@ public class SimpleMapper implements MapperInf {
 						currentMap = currentMap.replaceAll("\\?" + var, variables[j]);
 					}
 				}
-				result += currentMap + "\n";
+				
+				result += currentMap;
+				if(i<lines.length-1) {
+					result+= "\n";
+				}
 			}
 		}
 		return result;

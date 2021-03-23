@@ -63,6 +63,6 @@ public class HTTPPostSource implements SourceInf {
 	@Override
 	public void stop() {
 		// TODO Auto-generated method stub
-		
+		Spark.stop();
 	}
 }

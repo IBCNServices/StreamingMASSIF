@@ -23,7 +23,9 @@ public class HTTPGetSink implements SinkInf{
 	}
 	public HTTPGetSink(String path,String config) {
 		this(path);
-		this.config = config;
+		if(!config.isEmpty()) {
+			this.config = config;
+		}
 	}
 	
 	private String prepData() {

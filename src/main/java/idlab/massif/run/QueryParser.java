@@ -1,6 +1,8 @@
 package idlab.massif.run;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,9 +29,11 @@ import idlab.massif.filter.jena.JenaFilter;
 import idlab.massif.interfaces.core.AbstractionInf;
 import idlab.massif.interfaces.core.FilterInf;
 import idlab.massif.interfaces.core.MapperInf;
+import idlab.massif.interfaces.core.PipeLineElement;
 import idlab.massif.interfaces.core.SinkInf;
 import idlab.massif.interfaces.core.SourceInf;
 import idlab.massif.interfaces.core.WindowInf;
+import idlab.massif.mapping.JSONMapper;
 import idlab.massif.mapping.SimpleMapper;
 import idlab.massif.sinks.HTTPGetCombinedSink;
 import idlab.massif.sinks.HTTPGetSink;
@@ -37,16 +41,25 @@ import idlab.massif.sinks.PrintSink;
 import idlab.massif.sinks.WebSocketServerSink;
 import idlab.massif.sources.FileSource;
 import idlab.massif.sources.HTTPGetSource;
+import idlab.massif.sources.HTTPPostCombinedSource;
 import idlab.massif.sources.HTTPPostSource;
 import idlab.massif.sources.KafkaSource;
+import idlab.massif.timeout.KeyedTimeout;
+import idlab.massif.timeout.Timeout;
 import idlab.massif.window.esper.EsperWindow;
 
 public class QueryParser {
 	private static Logger logger = LoggerFactory.getLogger(QueryParser.class);
+	private Map<String,Class> genericComponents;
+	
+	public QueryParser() {
+		genericComponents = new HashMap<String,Class>();
+	}
 
-	public static PipeLineComponent parseComponent(String compId, JSONObject comp) throws QueryRegistrationException{
+	public  PipeLineComponent parseComponent(String compId, JSONObject comp) throws QueryRegistrationException{
 		String compType = comp.getString("type").toLowerCase();
 		PipeLineComponent pipeComp = null;
+		boolean notFound=false;
 		switch (compType) {
 		case "sink":
 			String impl = comp.getString("impl").toLowerCase();
@@ -65,6 +78,8 @@ public class QueryParser {
 
 				SinkInf getsink = new HTTPGetCombinedSink(comp.getString("path"), comp.getString("config"));
 				pipeComp = new PipeLineComponent(compId, getsink, Collections.EMPTY_LIST);
+			}else {
+				notFound=true;
 			}
 			// code block
 			break;
@@ -76,8 +91,17 @@ public class QueryParser {
 			if (impl.equals("jena")) {
 
 				FilterInf filter = new JenaFilter();
+				
 				if (comp.has("ontology")) {
-					filter.setStaticData(comp.getString("ontology"));
+					String[] ontologies = comp.getString("ontology").split(",");
+					for(String ont: ontologies) {
+						if(ont.endsWith("rules")){
+							filter.setRules(ont);
+						}else {
+							filter.setStaticData(ont);
+						}
+					}
+					
 				}
 				JSONArray queries = comp.getJSONArray("queries");
 				for (int i = 0; i < queries.length(); i++) {
@@ -89,8 +113,11 @@ public class QueryParser {
 				}
 				filter.start();
 				pipeComp = new PipeLineComponent(compId, filter, Collections.EMPTY_LIST);
+			}else {
+				notFound=true;
 			}
 			// code block
+			
 			break;
 		case "window":
 			int size = comp.getInt("size");
@@ -139,17 +166,22 @@ public class QueryParser {
 				KafkaSource kafkaSource = new KafkaSource(comp.getString("kafkaServer"), comp.getString("kafkaTopic"));
 				pipeComp = new PipeLineComponent(compId, kafkaSource, Collections.EMPTY_LIST);
 			}
-			if (impl.equals("httppostsource")) {
+			else if (impl.equals("httppostsource")) {
 				HTTPPostSource postSource = new HTTPPostSource(comp.getString("path"), comp.getInt("port"));
 				pipeComp = new PipeLineComponent(compId, postSource, Collections.EMPTY_LIST);
 			}
-			if (impl.equals("httpgetsource")) {
+			else if (impl.equals("httpgetsource")) {
 				HTTPGetSource getSource = new HTTPGetSource(comp.getString("url"), comp.getInt("timeout"));
 				pipeComp = new PipeLineComponent(compId, getSource, Collections.EMPTY_LIST);
 			}
-			if (impl.equals("filesource")) {
+			else if (impl.equals("filesource")) {
 				SourceInf fileSource = new FileSource(comp.getString("fileName"), comp.getInt("timeout"));
 				pipeComp = new PipeLineComponent(compId, fileSource, Collections.EMPTY_LIST);
+			}else if(impl.equals("httppostcombinedsource")) {
+				SourceInf httppostcombined = new HTTPPostCombinedSource(comp.getString("path"));
+				pipeComp = new PipeLineComponent(compId, httppostcombined, Collections.EMPTY_LIST);
+			}else {
+				notFound=true;
 			}
 			break;
 		case "mapper":
@@ -158,7 +190,11 @@ public class QueryParser {
 			if (comp.has("keepHeader")) {
 				keepHeader = comp.getBoolean("keepHeader");
 			}
+			
 			MapperInf mapper = new SimpleMapper(mapping, keepHeader);
+			if(mapping.contains("{") && mapping.contains("}")) {
+				mapper = new JSONMapper(mapping);
+			}
 			pipeComp = new PipeLineComponent(compId, mapper, Collections.EMPTY_LIST);
 			break;
 		case "cep":
@@ -172,12 +208,48 @@ public class QueryParser {
 			}
 			pipeComp = new PipeLineComponent(compId, cepEngine, Collections.EMPTY_LIST);
 			cepEngine.registerQuery(query, eventTypes, pipeComp);
+		case "timeout":
+			KeyedTimeout timeout = new KeyedTimeout(comp.getString("option1"),comp.getString("option2"));
+			pipeComp = new PipeLineComponent(compId, timeout, Collections.EMPTY_LIST);
 
+		}
+		if(notFound ) {
+			//maybe it is an generic object
+			String impl = comp.getString("impl").toLowerCase();
+			if(genericComponents.containsKey(impl)) {
+				Class genericClass = genericComponents.get(impl);
+				Constructor cons;
+				try {
+					cons = genericClass .getConstructor(new Class[] {String.class,String.class});
+					Object[] obj = { comp.getString("option1"),comp.getString("option2")};					
+					pipeComp = new PipeLineComponent(compId, (PipeLineElement)cons.newInstance(obj), Collections.EMPTY_LIST);
+				} catch (NoSuchMethodException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (SecurityException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InstantiationException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				
+			}
 		}
 		return pipeComp;
 	}
-
-	public static PipeLineGraph parse(String query) throws QueryRegistrationException {
+	 
+	public  PipeLineGraph parse(String query) throws QueryRegistrationException {
 		Map<String, PipeLineComponent> pipelineComponents = new HashMap<String, PipeLineComponent>();
 		JSONObject obj = new JSONObject(query);
 		if (!obj.has("components")) {
@@ -210,6 +282,9 @@ public class QueryParser {
 		}
 
 		return new PipeLineGraph(pipelineComponents);
+	}
+	public void registerGenericComponent(String parseName,Class clazz) {
+		genericComponents.put(parseName.toLowerCase(), clazz);
 	}
 
 }

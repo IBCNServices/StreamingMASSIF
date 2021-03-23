@@ -31,7 +31,7 @@ public class PipeLineGraph {
 			reverseMap.put(entry.getValue(), entry.getKey());
 			str.append("\"").append(entry.getKey()).append("\":[");
 			for(PipeLineComponent out: entry.getValue().getOutputs()) {
-				str.append("\"").append(reverseMap.get(out)).append("\"");
+				str.append("\"").append(reverseMap.get(out)).append("\",");
 			}
 			str.append("],");
 		}

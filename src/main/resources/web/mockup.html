@@ -1,0 +1,99 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="index.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
+
+        <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    </head>
+    <body>
+    	
+    
+        <div id="app">
+        	<input v-model="url" placeholder="url">
+        	<!--<input type="range" min="1" max="100" step="1" v-model="speed"> 
+        	Stream Speed:
+			<input type="number" v-model="speed"/>-->
+        	<button class="button" onclick="send()">Send</button>
+                <todo-item
+                    v-for="item in roomList"
+                    v-bind:todo="item"
+                    v-bind:key="item.id"
+                    >
+               </todo-item>
+            
+        </div>
+        
+        <script>
+	Vue.component('todo-item', {
+	    props: ['todo'],
+	    template: `<div class="container">
+	    			<p>Room: {{ todo.text }}</p>
+	   <p><input type="range"  v-bind:min="todo.constraints.temp.min" v-bind:max="todo.constraints.temp.max" v-model="todo.temperature" step="1"> Temperature value: {{ todo.temperature }}</p>
+	   <p><input type="range" v-bind:min="todo.constraints.co2.min" v-bind:max="todo.constraints.co2.max" v-model="todo.co2" step="1"> CO2 value: {{ todo.co2 }}</p>
+	   <p><input type="range" v-bind:min="todo.constraints.humidity.min" v-bind:max="todo.constraints.humidity.max"  v-model="todo.relativeHumidity" step="1"> Humidity value: {{ todo.relativeHumidity }}</p>
+	   <p><input type="range" v-bind:min="todo.constraints.pressure.min" v-bind:max="todo.constraints.pressure.max" v-model="todo.atmosphericPressure" step="1"> Pressure value: {{ todo.atmosphericPressure }}</p>
+	    			
+	    		</div>`
+	})
+
+	var constraints = {temp:{min:"18",max:"28"},co2:{min:"400",max:"1500"},humidity:{min:"30",max:"80"},pressure:{min:"900",max:"1100"}};
+
+	var app = new Vue({
+	    el: '#app',
+	    
+	    data: {
+	      url: "/httppostsource/test",
+	      speed: 1,
+	      roomList: [
+	        { id: 0, text: 'Office 200.016', sensor: '70:ee:50:73:35:e4',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 1, text: 'Office 200.009', sensor: '70:ee:50:63:c9:da',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 2, text: 'Office 200.022', sensor: '70:ee:50:73:2b:60',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 3, text: 'Office 200.023', sensor: '70:ee:50:73:2c:42',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 4, text: 'Office 200.019', sensor: '70:ee:50:67:40:06',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 5, text: 'Office 200.012', sensor: '70:ee:50:73:34:a6',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 6, text: 'Office 200.031', sensor: '70:ee:50:73:3e:f8',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 7, text: 'Office 200.017', sensor: '70:ee:50:73:3d:58',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 8, text: 'Office 200.018', sensor: '70:ee:50:73:3d:ec',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 9, text: 'Office 200.010', sensor: '70:ee:50:73:31:86',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 10, text: 'Office 200.032', sensor: '70:ee:50:67:4e:84',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 11, text: 'Office 200.021', sensor: '70:ee:50:67:40:80',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 12, text: 'Office 200.020', sensor: '70:ee:50:63:cb:c8',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 13, text: 'Office 200.008', sensor: '70:ee:50:73:34:96',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 14, text: 'Office 200.026', sensor: '70:ee:50:73:31:8c',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 15, text: 'Office 200.006', sensor: '70:ee:50:63:d9:2e',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 16, text: 'Office 200.024', sensor: '70:ee:50:63:c9:ca',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+			{ id: 17, text: 'Office 200.007', sensor: '70:ee:50:73:3d:a2',temperature:constraints.temp.min,co2:constraints.co2.min,relativeHumidity:constraints.humidity.min,atmosphericPressure:constraints.pressure.min,constraints: constraints},
+
+	        
+	      ]
+	    }
+})
+		function prepareData(){
+			var roomData = app._data.roomList;
+			var obeliskData = roomData.map(toObeliskFormat);
+			return [].concat.apply([], obeliskData);
+		}
+		function toObeliskFormat(value){
+			
+			var sample = [{"tsReceivedMs":Date.now(),"metricId":"org.dyamand.types.airquality.CO2::number","timestamp":Date.now(),"sourceId":value.sensor,"geohash":"7zzzzzzzzzzz","h3Index":646078419604526808,"elevation":0.0,"value":value.co2,"tags":{"_scope":"idlab.igent","_auth":"service-account-dyamand"},"obeliskDelayMs":45},
+			{"tsReceivedMs":Date.now(),"metricId":"org.dyamand.types.common.Temperature::number","timestamp":Date.now(),"sourceId":value.sensor,"geohash":"7zzzzzzzzzzz","h3Index":646078419604526808,"elevation":0.0,"value":value.temperature,"tags":{"_scope":"idlab.igent","_auth":"service-account-dyamand"},"obeliskDelayMs":45},
+			{"tsReceivedMs":Date.now(),"metricId":"org.dyamand.types.common.AtmosphericPressure::number","timestamp":Date.now(),"sourceId":value.sensor,"geohash":"7zzzzzzzzzzz","h3Index":646078419604526808,"elevation":0.0,"value":value.atmosphericPressure,"tags":{"_scope":"idlab.igent","_auth":"service-account-dyamand"},"obeliskDelayMs":45},
+			{"tsReceivedMs":Date.now(),"metricId":"org.dyamand.types.common.RelativeHumidity::number","timestamp":Date.now(),"sourceId":value.sensor,"geohash":"7zzzzzzzzzzz","h3Index":646078419604526808,"elevation":0.0,"value":value.relativeHumidity,"tags":{"_scope":"idlab.igent","_auth":"service-account-dyamand"},"obeliskDelayMs":45},
+			{"tsReceivedMs":Date.now(),"metricId":"org.dyamand.types.common.Loudness::number","timestamp":Date.now(),"sourceId":value.sensor,"geohash":"7zzzzzzzzzzz","h3Index":646078419604526808,"elevation":0.0,"value":value.relativeHumidity,"tags":{"_scope":"idlab.igent","_auth":"service-account-dyamand"},"obeliskDelayMs":45},
+			];
+			return sample;
+		}
+		function send(){
+			var data = prepareData();
+			var url = app._data.url;
+			console.log(url);
+			axios({method: 'post', url:url,data}).then(data=>console.log(data)).catch(err=>console.log(err));
+		}
+
+        </script>
+    </body>
+</html>

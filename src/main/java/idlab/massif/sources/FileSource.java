@@ -9,7 +9,9 @@ import idlab.massif.interfaces.core.ListenerInf;
 import idlab.massif.interfaces.core.SourceInf;
 
 /***
- * Reads a provided file line by line and streams each line to the pipeline.
+ * Reads a provided file line by line and streams each line to the pipeline. If
+ * timeout equals -1, it read the whole file in one go and then streams the
+ * result.
  * 
  * @author psbonte
  *
@@ -20,7 +22,7 @@ public class FileSource implements SourceInf {
 	private PipeLine pipeline;
 	private long timeout;
 	private ListenerInf listener;
-	private boolean streaming=true;
+	private boolean streaming = true;
 
 	public FileSource(String fileName, long timeout) {
 		this.fileName = fileName;
@@ -34,22 +36,39 @@ public class FileSource implements SourceInf {
 	public void stream() {
 
 		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-
 			String line;
-			while ((line = br.readLine()) != null && streaming) {
-				line +="\n";
+			if (timeout >= 0) {
+				
+				while ((line = br.readLine()) != null && streaming) {
+
+					line += "\n";
+					if (listener != null) {
+						listener.notify(0, line);
+					}
+					if (pipeline != null) {
+						pipeline.addEvent(line);
+					}
+					try {
+						Thread.sleep(timeout);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+				}
+			} else {
+				//read the file as one and then stream the results
+				StringBuilder result = new StringBuilder();
+				while ((line = br.readLine()) != null && streaming) {
+					result.append(line).append("\n");
+				}
 				if (listener != null) {
-					listener.notify(0, line);
+					listener.notify(0, result.toString());
 				}
 				if (pipeline != null) {
-					pipeline.addEvent(line);
+					pipeline.addEvent(result.toString());
 				}
-				try {
-					Thread.sleep(timeout);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				
 			}
 
 		} catch (IOException e) {
@@ -74,7 +93,7 @@ public class FileSource implements SourceInf {
 		// TODO Auto-generated method stub
 		streaming = true;
 		new Thread(() -> this.stream()).start();
-		
+
 	}
 
 	@Override
@@ -82,9 +101,11 @@ public class FileSource implements SourceInf {
 		// TODO Auto-generated method stub
 		streaming = false;
 	}
-	@Override 
+
+	@Override
 	public String toString() {
-		return String.format("{\"type\":\"Source\",\"impl\":\"fileSource\",\"fileName\":\"%s\",\"timeout\":%d}", fileName,timeout);
+		return String.format("{\"type\":\"Source\",\"impl\":\"fileSource\",\"fileName\":\"%s\",\"timeout\":%d}",
+				fileName, timeout);
 	}
 
 }

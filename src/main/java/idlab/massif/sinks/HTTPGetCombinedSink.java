@@ -73,18 +73,19 @@ class HTTPHandlerSingleton {
 public class HTTPGetCombinedSink implements SinkInf {
 	private String path;
 	private HTTPHandlerSingleton handler;
-
+	private String config;
 	public HTTPGetCombinedSink(String path) {
 		handler = HTTPHandlerSingleton.getInstance();
 		this.path = path;
 		handler.registerRouter(path);
 		handler.setConfig(path, "last");
-
+		this.config ="";
 	}
 
 	public HTTPGetCombinedSink(String path, String config) {
 		this(path);
 		handler.setConfig(path, config);
+		this.config = config;
 	}
 
 	@Override
@@ -113,7 +114,7 @@ public class HTTPGetCombinedSink implements SinkInf {
 	}
 	@Override
 	public String toString() {
-		return String.format("{\"type\":\"Sink\",\"impl\":\"httpGetSinkCombined\",\"path\":\"%s\",\"config\":\"\"}",path);
+		return String.format("{\"type\":\"Sink\",\"impl\":\"httpGetSinkCombined\",\"path\":\"%s\",\"config\":\"%s\"}",path,config);
 	}
 
 }

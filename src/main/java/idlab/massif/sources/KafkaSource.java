@@ -26,36 +26,7 @@ public class KafkaSource implements SourceInf {
 	
 	
 
-//	public static void main(String[] args) throws Exception {
-//		Properties props = new Properties();
-//		props.put(StreamsConfig.APPLICATION_ID_CONFIG, "streams-test");
-//		props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka-headless.kafka:9092");
-//		props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-//		props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-//		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-//		StreamsBuilder builder = new StreamsBuilder();
-//
-//		
-//		
-//		KStream<String, String> sensors = builder.stream("idlab.homelab", Consumed.with(Serdes.String(), Serdes.String()));
-//		sensors
-//		.foreach((key, value) -> System.out.println(key + " " +value));
-//		
-//
-//		final Topology topology = builder.build();
-//		final KafkaStreams streams = new KafkaStreams(topology, props);
-//
-//		streams.cleanUp();
-//
-//		streams.start();
-//
-//		// usually the stream application would be running forever,
-//		// in this example we just let it run for some time and stop since the input
-//		// data is finite.
-////		Thread.sleep(5000L);
-////
-////		streams.close();
-//	}
+
 
 
 	private PipeLine pipeline;
@@ -64,6 +35,8 @@ public class KafkaSource implements SourceInf {
 	private Properties props;
 	private ListenerInf listener;
 	private KafkaStreams streams;
+	private long timeOutTime;
+	private long startTime;
 	
 	public KafkaSource(String kafkaServer, String kafkaTopic) {
 		this.kafkaServer = kafkaServer;
@@ -73,16 +46,21 @@ public class KafkaSource implements SourceInf {
 		props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServer);
 		props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 		props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest"); //latest?
+		this.timeOutTime=30000;
+		
+		
 	}
 	public void registerPipeline(PipeLine pipeline) {
 		this.pipeline = pipeline;
 	}
 	public void stream() {
+		this.startTime = System.currentTimeMillis();
 		StreamsBuilder builder = new StreamsBuilder();
 
 		KStream<String, String> sensors = builder.stream(this.kafkaTopic, Consumed.with(Serdes.String(), Serdes.String()));
 		sensors
+		.filter((key, value) ->(System.currentTimeMillis()-startTime)>timeOutTime)
 		.foreach((key, value) -> {
 			if(pipeline!=null) {
 				this.pipeline.addEvent(value);

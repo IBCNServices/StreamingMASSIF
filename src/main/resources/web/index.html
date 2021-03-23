@@ -45,6 +45,9 @@
       <a class="navbar-item" onclick="showConfig()">
         Get Config
       </a>
+      <a class="navbar-item" onclick="reset()">
+        Reset
+      </a>
 
       <div class="navbar-item has-dropdown is-hoverable">
         <a class="navbar-link">
@@ -105,6 +108,7 @@
         <button class="button" onclick="add('cep')">CEP</button>
         <button class="button" onclick="add('sink')">Sink</button>
         <button class="button" onclick="add('mapper')">Mapper</button>
+        <button class="button" onclick="add('timeout')">TimeOut</button>
         <!--<button class="button" onclick="toggleLine()">Line</button>-->
     </div>
 <button class="button" onclick="deleteComp()">Delete Selection</button>
@@ -120,6 +124,7 @@
               <option value="httpGetSource">HTTP Get</option>
               <option value="httpPostSource">HTTP POST</option>
               <option value="kafkaSource">Kafka</option>
+              <option value="httpPostCombinedSource">HTTP Combined POST</option>
             </select>
             
           </div>
@@ -169,6 +174,9 @@
             
           </div>
         </div>
+
+
+
         <input class="input" type="text" placeholder="URL">
           <input class="input" type="text" placeholder="Timeout">
           <textarea class="textarea" placeholder="Output will be loaded here"></textarea>
@@ -176,6 +184,23 @@
            <!--<button onclick="viewTable()">View as Table</button>-->
           <button onclick="viewTable2()">View Results</button>
           <button onclick="viewStream()">View As Stream</button>
+    </div>
+      <div id="timeoutInfo" style="display:none;">
+      <div class="control">
+          <div class="select">
+            <select>
+              <option value="timeout">Time Out</option>
+              <option value="dstream">DStream</option>
+              <option value="istream">IStream</option>
+              <option value="rstream">RStream</option>
+              
+            </select>
+            
+          </div>
+        </div>
+        <input class="input" type="text" placeholder="input">
+        <textarea class="textarea" placeholder="SPARQL Key-Value Query"></textarea>
+         
     </div>
     <div id="lineInfoID" style="display:none;">
           A connection has been selected.
@@ -326,6 +351,11 @@
             stage.update();
             loadConfigs();
         }
+        function reset(){
+          clearAll();
+          stage.update();
+          data.editMode=true;
+        }
         function loadConfigs(){
             var xhr = new XMLHttpRequest();
                 // we defined the xhr
@@ -335,8 +365,20 @@
 
                     if (this.status == 200) {
                         console.log(this.responseText);
-                        var data = JSON.parse(this.responseText);
-                       console.log(data);
+                        var input =this.responseText
+                        let regex = /\,(?!\s*?[\{\[\"\'\w])/g;
+                        var json = JSON.parse(input.replace(regex, ''));
+                        
+                        for (const [key, values] of Object.entries(json)) {
+                            clearAll();
+                            parseConfig(values);
+                        }
+                       
+                        startFrom=null;
+                        drawLines();
+                        stage.update();
+                        data.editMode=false;
+                        
                         // we get the returned data
                     }
                     // end of state change: it can be after some time (async)
@@ -472,6 +514,12 @@
                 var elem = document.querySelector('#sinkInfo');
 
             }
+            if(type=='timeout') {
+                circle.graphics.beginFill("brown").drawRoundRect(-50, -50, 100, 70,10);
+                var text = 'TimeOut';
+                var elem = document.querySelector('#timeoutInfo');
+
+            }
             //copy new div
             var clone = elem.cloneNode(true);
             // Update the ID and add a class
@@ -486,7 +534,7 @@
             label.y = -7;
 
             var dragger = new createjs.Container();
-            dragger.x = (Object.keys(idToComp).length)*150+50;
+            dragger.x = Math.min((Object.keys(idToComp).length)*150+50,1100);
             dragger.y = getRandomInt(100)+50;
             dragger.addChild(circle, label);
             idToComp[currentId] = dragger;
@@ -569,6 +617,8 @@
                         config.components[key]={"type": "Source","impl": selectedInput,"url": input1,"timeout":parseInt(input2)};
                     }else if(selectedInput==="fileSource"){
                         config.components[key]={"type": "Source","impl": selectedInput,"fileName": input1,"timeout":parseInt(input2)};
+                    }else if(selectedInput==="httpPostCombinedSource"){
+                        config.components[key]={"type": "Source","impl": selectedInput,"path": input1};
                     }
                 }else if(value==='Filter'){
                     var ontUrl = elem.getElementsByTagName('input')[0].value;
@@ -604,14 +654,23 @@
                     }else if(selectedInput==="printSink"){
                         config.components[key]={"type": "Sink","impl": selectedInput};
                     }else if(selectedInput==="httpGetSinkCombined"){
-                        config.components[key]={"type": "Sink","impl": selectedInput,"path": key,"config":input2};
+                        config.components[key]={"type": "Sink","impl": selectedInput,"path": key,"config":input1};
+                    }else{
+                      config.components[key]={"type": "Sink","impl": selectedInput,"option1": input1,"option2":input2};
                     }
                   }
                 else if(value=='CEP'){
                     var query = elem.getElementsByTagName('textarea')[0].value;
                     var classes = elem.getElementsByTagName('input')[0].value;
                     config.components[key]={"type": "CEP","query": query,"classes":classes};
-                }
+                }else if(value==='TimeOut'){
+                    var selec = elem.getElementsByTagName('select')[0];
+                    var selectedInput = selec.options[selec.selectedIndex].value;
+                    var input1 = elem.getElementsByTagName('input')[0].value;
+                    var query = elem.getElementsByTagName('textarea')[0].value;
+                    config.components[key]={"type": "TimeOut","impl": selectedInput,"option1": input1,"option2":query};
+                    
+                  }
             }
             return config;
 
@@ -655,10 +714,11 @@
 
                 if (this.status == 200) {
                     //var data = JSON.parse(this.responseText);
+                    console.log(this.responseText);
                     if(this.responseText.length > 100000){
-                        alert('Output too large! Load again or use last in sink options!')
+                        alert('Output too large! Load again or use last in sink options! (Or check the logs)')
                     }else{
-                        console.log(this.responseText);
+                        
                         var elem = document.getElementById(selected.name);
                         elem.getElementsByTagName('textarea')[0].value = this.responseText;
                 }
@@ -739,14 +799,29 @@
           typesMap={};
           data.editMode=true;
         }
+        function replaceVals(arr,subs){
+          var i = 0;
+          var newArr = [];
+          for (i = 0; i < arr.length; i++) {
+            if(subs.hasOwnProperty(arr[i])){
+                newArr.push(subs[arr[i]]);
+              }else{
+                newArr.push(arr[i]);
+            }
+          }
+          return newArr;
+        }
         function parseConfig(config){
+          idSubs={}
             for (const [key, values] of Object.entries(config["components"])) {
             console.log(`${key}: ${values}`);
             //draw on canvas
             add(values["type"].toLowerCase());
             //add the properties
             var value = values["type"].toLowerCase();
-            var elem = document.getElementById(key);
+            idSubs[key] = counter - 1;
+            var elem = document.getElementById(counter-1);
+            
             if(value==='window'){
                     elem.getElementsByTagName('input')[0].value=values["size"];
                     elem.getElementsByTagName('input')[1].value=values["slide"];
@@ -773,6 +848,11 @@
                         elem.getElementsByTagName('input')[0].value = values["fileName"];
                         elem.getElementsByTagName('input')[1].value = values["timeout"];
                     }
+                    else if(selectedInput==="httppostcombinedsource"){
+                        selectElem.value='httpPostCombinedSource';
+                        elem.getElementsByTagName('input')[0].value = values["path"];
+                        elem.getElementsByTagName('input')[1].value = "";
+                    }
                 }else if(value==='filter'){     
                     elem.getElementsByTagName('input')[0].value = values["ontology"];
                     elem.getElementsByTagName('textarea')[0].value = values["queries"];
@@ -781,6 +861,10 @@
                     elem.getElementsByTagName('input')[0].value= values["ontologyIRI"];
                     elem.getElementsByTagName('input')[1].value = values["expressions"][0]["head"];
                     elem.getElementsByTagName('input')[1].value = values["expressions"][0]["tail"];
+                }
+                else if(value==='mapper'){
+                    elem.getElementsByTagName('input')[0].checked = values["keepHeader"];
+                    elem.getElementsByTagName('textarea')[0].value = values["mapping"];                    
                 }
                 else if(value==='sink'){
                     var selectedInput = values["impl"].toLowerCase();
@@ -809,12 +893,35 @@
                         selectElem.value='httpGetSinkCombined';
                         elem.getElementsByTagName('input')[0].value = values["path"];
                         elem.getElementsByTagName('input')[0].value = values["config"];
+                    }else{
+                      set_selection(selectElem,values["impl"]);
+                        elem.getElementsByTagName('input')[0].value = values["option1"];
+                        elem.getElementsByTagName('input')[1].value = values["option2"];
                     }
+                  }
+                  else if(value==='timeout'){
+                    var selectedInput = values["impl"].toLowerCase();
+                    var selectElem=elem.getElementsByTagName('select')[0];
+
+          
+                    set_selection(selectElem,values["impl"]);
+                    elem.getElementsByTagName('input')[0].value = values["option1"];
+                    elem.getElementsByTagName('textarea')[0].value = values["option2"];
+                    
                   }
 
           }
           //connect
           outGoing=config["configuration"];
+          newvals={}
+          for (var key in outGoing) {
+             if(idSubs.hasOwnProperty(key)){
+              newvals[idSubs[key]]=replaceVals(outGoing[key],idSubs);
+              }else{
+              newvals[key]=replaceVals(outGoing[key],idSubs);
+              }
+          }
+          outGoing = newvals;
         }
         function loadConfig(){
           clearAll();
@@ -824,6 +931,13 @@
           drawLines();
           stage.update();
           hideLoad();
+        }
+        function set_selection(select,c){
+          for(var i = 0;i < select.options.length;i++){
+              if(select.options[i].value.toLowerCase() == c.toLowerCase() ){
+                  select.options[i].selected = true;
+              }
+        }
         }
         function own_split(row){
             var rowSplit=",";
@@ -992,6 +1106,32 @@
              //   setTimeout(function(){ loadMonitor(); }, 1000);
             //}
         }
+        function addSinkOption(){
+          //get additional sinkOptions from server
+          var xhr = new XMLHttpRequest();
+            // we defined the xhr
+
+            xhr.onreadystatechange = function () {
+                if (this.readyState != 4) return;
+
+                if (this.status == 200) {
+                    var data = JSON.parse(this.responseText);
+                    for (i = 0; i < data.length; i++) {
+                      option = document.createElement( 'option' );
+                      option.text = data[i];
+                      option.value = data[i]+"Sink";
+                      var elem = document.querySelector('#sinkInfo');
+                      var select = elem.getElementsByTagName('select')[0];
+                      select.add( option );
+                  }
+                }
+            };
+
+            xhr.open('GET', '/sinks', true);
+            xhr.send();
+          
+        }
+        addSinkOption();
         //continuousUpdate ();
         setInterval(loadMonitor, 2000); 
         var monitorVue = new Vue({
@@ -1077,7 +1217,10 @@
     color: #000;
   }
 
-  modal-content-width{}
+  .modal-content { 
+      margin-top: 100px; 
+      width: 750px; 
+    } 
 </style>
 </body>
 </html>
