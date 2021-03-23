@@ -38,7 +38,7 @@ How to cite [MASSIF](https://link.springer.com/article/10.1007/s10115-016-0969-1
 ## Building and running MASSIF:
 build:
 ```
-mvn clean compile assembly:single`
+mvn clean compile assembly:single
 mv target/massif-jar-with-dependencies.jar .
 ```
 
@@ -47,3 +47,12 @@ run:
 
 options:
 -p: port on which massif listens, default 9000
+
+GUI:
+The MASSIF GUI is available on http://localhost:9000
+
+REST APIS:
+
+- /register: register a configuration
+- /stop: stop a certain query
+- /configs: get all registered configs
