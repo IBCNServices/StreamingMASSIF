@@ -26,43 +26,39 @@ import idlab.massif.interfaces.core.CEPListener;
 import idlab.massif.interfaces.core.SelectionInf;
 import idlab.massif.interfaces.core.SelectionListenerInf;
 import idlab.massif.selection.csparql_basic.CSparqlSelectionImpl;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 import spark.Response;
 import spark.Spark;
 
 import static spark.Spark.*;
 import org.json.JSONObject;
 
-
-public class Run {
+@Command(name = "MASSIF", mixinStandardHelpOptions = true, version = "Streaming MASSIF 0.1")
+public class Run implements Runnable{
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	
 	Map<String,PipeLineGraph> configs;
 	int configCounter = 0;
 	private String sinks = "[]";
 	public static void main(String[] args) throws Exception {
-		Run r = new Run();
-		r.run();
+		int exitCode = new CommandLine(new Run()).execute(args);
+        System.exit(exitCode);
 		
-    
+		//new Run();
 	}
 
 	private PipeLine engine;
 	private QueryParser parser;
+	@Option(names = "-p", description = "Set port number, default: ${DEFAULT-VALUE}.")
+	private int port = 9000;
 	
 	public Run() {
 		logger.info("MASSIF STARTING");
 		configs = new HashMap<String,PipeLineGraph>();
 		parser =  new QueryParser();
-		port(9000);
-		staticFileLocation("/web");
-        get("/hello", (req, res) -> "MASSIF ONLINE");
-        
-        post("/register",(req, res) ->  register(req.body(),res));
-        post("/stop",(req, res) ->  stop(req.body()));
-        get("/configs", (req, res) -> generateConfigs());
-        get("/sinks", (req, res) -> getSinks());
-        //post("/send",(req, res) -> {engine.addEvent(req.body()); return res.status();});
-        logger.info("MASSIF ONLINE");
+		
         
 	}
 	public static void resetRoutes() {
@@ -106,8 +102,31 @@ public class Run {
 
 	}
 
-	public void run() throws Exception {
-		
+	public void run()  {
+		logger.info(String.format("MASSIF Listening on port %s", port));
+		logger.info(String.format("Access the MASSIF GUI on  localhost:%s "
+				+ "or register a configuration on localhost:%s/register", port, port));
+		port(port);
+		staticFileLocation("/web");
+        get("/hello", (req, res) -> "MASSIF ONLINE");
+        
+        post("/register",(req, res) ->  register(req.body(),res));
+        post("/stop",(req, res) ->  stop(req.body()));
+        get("/configs", (req, res) -> generateConfigs());
+        get("/sinks", (req, res) -> getSinks());
+        //post("/send",(req, res) -> {engine.addEvent(req.body()); return res.status();});
+        logger.info("MASSIF is ONLINE");
+        keepAlive();
+	}
+	private void keepAlive() {
+		while(true) {
+        	try {
+				Thread.sleep(100000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
 	}
 	public String generateConfigs() {
 		StringBuilder str = new StringBuilder();

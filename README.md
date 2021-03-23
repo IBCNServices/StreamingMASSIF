@@ -38,7 +38,9 @@ How to cite [MASSIF](https://link.springer.com/article/10.1007/s10115-016-0969-1
 ## Building and running MASSIF:
 build:
 `mvn clean compile assembly:single`
+
 run:
 `java -jar massif-0.0.1-jar-with-dependencies.jar`
 
-
+options:
+-p: port on which massif listens, default 9000
