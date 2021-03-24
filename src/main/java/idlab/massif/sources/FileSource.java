@@ -25,7 +25,7 @@ public class FileSource implements SourceInf {
 	private boolean streaming = true;
 
 	public FileSource(String fileName, long timeout) {
-		this.fileName = fileName;
+		this.fileName = fileName.trim();
 		this.timeout = timeout;
 	}
 

@@ -9,6 +9,7 @@ public class SimpleMapper implements MapperInf {
 	private boolean keepHeader = false;
 	private boolean isFirst = true;
 	private String header;
+
 	public SimpleMapper(String mapping) {
 		this.mapping = mapping;
 	}
@@ -32,7 +33,7 @@ public class SimpleMapper implements MapperInf {
 	}
 
 	public String map(String input) {
-		if(keepHeader) {
+		if (keepHeader) {
 			StringBuilder builder = new StringBuilder();
 			input = builder.append(header).append("\n").append(input).toString();
 		}
@@ -44,18 +45,21 @@ public class SimpleMapper implements MapperInf {
 		if (lines.length > 1) {
 			String[] vars = lines[0].split(",");
 			for (int i = 1; i < lines.length; i++) {
+
 				String currentMap = new String(mapping);
 				String[] variables = lines[i].split(",");
-				for (int j = 0; j < vars.length; j++) {
-					String var = vars[j];
-					if (!var.equals("")) {
-						currentMap = currentMap.replaceAll("\\?" + var, variables[j]);
+				if (variables.length == vars.length) {
+					for (int j = 0; j < vars.length; j++) {
+						String var = vars[j];
+						if (!var.equals("")) {
+							currentMap = currentMap.replaceAll("\\?" + var, variables[j]);
+						}
 					}
+
+					result += currentMap;
 				}
-				
-				result += currentMap;
-				if(i<lines.length-1) {
-					result+= "\n";
+				if (i < lines.length - 1) {
+					result += "\n";
 				}
 			}
 		}
@@ -94,9 +98,10 @@ public class SimpleMapper implements MapperInf {
 		// TODO Auto-generated method stub
 
 	}
+
 	@Override
 	public String toString() {
-		return String.format("{\"type\":\"mapper\",\"keepHeader\":%b,\"mapping\":%s}",keepHeader,mapping);
+		return String.format("{\"type\":\"mapper\",\"keepHeader\":%b,\"mapping\":%s}", keepHeader, mapping);
 
 	}
 

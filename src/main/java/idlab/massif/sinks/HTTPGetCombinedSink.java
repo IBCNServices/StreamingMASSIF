@@ -35,7 +35,7 @@ class HTTPHandlerSingleton {
 		return single_instance;
 	}
 
-	private String prepData(String id) {
+	private synchronized String prepData(String id) {
 		List<String> lastEvents = null;
 		if (eventSourceMap.containsKey(id)) {
 			lastEvents = eventSourceMap.get(id);
@@ -55,7 +55,7 @@ class HTTPHandlerSingleton {
 		sourceConfigMap.put(id, config);
 	}
 
-	public void add(String id, String event) {
+	public synchronized void add(String id, String event) {
 		if (eventSourceMap.containsKey(id)) {
 			if (sourceConfigMap.get(id).equals("last")) {
 				eventSourceMap.get(id).clear();
