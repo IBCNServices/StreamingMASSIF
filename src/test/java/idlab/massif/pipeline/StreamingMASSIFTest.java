@@ -75,7 +75,7 @@ public class StreamingMASSIFTest {
 				"	?result ?rP ?rO.\n" + 
 				"}";
 		FilterInf filter = new JenaFilter();
-		filter.setStaticData("/Users/psbonte/Documents/Github/StreamingMASSIF/examples/influenza/static.owl");
+		filter.setStaticData("examples/influenza/static.owl");
 		int filterQueryID=filter.registerContinuousQuery(query);
 		filter.start();
 		//define the abstraction layer
@@ -84,7 +84,7 @@ public class StreamingMASSIFTest {
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new StringDocumentSource(ONT_STRING));
 		
-		ontology = manager.loadOntologyFromOntologyDocument(new File("/Users/psbonte/Documents/Github/StreamingMASSIF/examples/influenza/influenza.owl"));
+		ontology = manager.loadOntologyFromOntologyDocument(new File("examples/influenza/influenza.owl"));
 		abstractor.setOntology(ontology);
 		// register new DL query
 		String classExpressiona = "LowTemperatureObservation";// and (observedProperty some Temperature)";
@@ -130,7 +130,7 @@ public class StreamingMASSIFTest {
 //			windowComp.addEvent(ONT_EVENTb);
 //
 //		}
-		FileSource fsource = new FileSource("/Users/psbonte/Documents/Github/StreamingMASSIF/examples/influenza/stream.xml",1000);
+		FileSource fsource = new FileSource("examples/influenza/stream.xml",1000);
 		PipeLineComponent sourceComp = new PipeLineComponent(fsource,Collections.singletonList(filterComp));
 		fsource.stream();
 		

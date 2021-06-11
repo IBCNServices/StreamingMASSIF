@@ -1,39 +1,29 @@
 package idlab.massif.run;
 
+import static spark.Spark.get;
+import static spark.Spark.port;
+import static spark.Spark.post;
+import static spark.Spark.staticFileLocation;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.io.StringDocumentSource;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import idlab.massif.abstraction.hermit.HermitAbstractionImpl;
-import idlab.massif.cep.esper.EsperCEPImpl;
 import idlab.massif.core.PipeLine;
 import idlab.massif.core.PipeLineGraph;
 import idlab.massif.exceptions.QueryRegistrationException;
-import idlab.massif.interfaces.core.AbstractionInf;
-import idlab.massif.interfaces.core.AbstractionListenerInf;
-import idlab.massif.interfaces.core.CEPInf;
-import idlab.massif.interfaces.core.CEPListener;
-import idlab.massif.interfaces.core.SelectionInf;
-import idlab.massif.interfaces.core.SelectionListenerInf;
-import idlab.massif.selection.csparql_basic.CSparqlSelectionImpl;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import spark.Response;
 import spark.Spark;
-
-import static spark.Spark.*;
-import org.json.JSONObject;
 
 @Command(name = "MASSIF", mixinStandardHelpOptions = true, version = "Streaming MASSIF 0.1")
 public class Run implements Runnable{
@@ -41,7 +31,7 @@ public class Run implements Runnable{
 	
 	Map<String,PipeLineGraph> configs;
 	int configCounter = 0;
-	private String sinks = "[]";
+	private List<String> sinks ;
 	public static void main(String[] args) throws Exception {
 		int exitCode = new CommandLine(new Run()).execute(args);
         System.exit(exitCode);
@@ -58,18 +48,16 @@ public class Run implements Runnable{
 		logger.info("MASSIF STARTING");
 		configs = new HashMap<String,PipeLineGraph>();
 		parser =  new QueryParser();
-		
+		sinks = new ArrayList<>();
         
 	}
 	public static void resetRoutes() {
 		Spark.stop();
 	}
-	public void setSinks(String sinks) {
-		this.sinks = sinks;
-	}
+	
 	private String getSinks() {
-		// TODO Auto-generated method stub
-		return sinks;
+		List<String> quotedSinks = sinks.stream().map(s -> "\""+s+"\"").collect(Collectors.toList());
+		return "["+String.join("," ,quotedSinks) +"]";
 	}
 	public String stop(String queryID) {
 		PipeLineGraph g = configs.get(queryID);
@@ -140,6 +128,7 @@ public class Run implements Runnable{
 		return result;
 	}
 	public void registerGenericComponent(String parseName,Class clazz){
+		sinks.add(parseName);
 		parser.registerGenericComponent(parseName, clazz);
 	}
 
