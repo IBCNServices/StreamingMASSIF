@@ -60,7 +60,7 @@ public class KeyedTimeout implements PipeLineElement, ListenerInf {
 
 	@Override
 	public String toString() {
-		return String.format("{\"type\":\"TimeOut\",\"impl\":\"timeout\",\"option1\":%s,\"option2\":%s}", timeout + "",
+		return String.format("{\"type\":\"TimeOut\",\"impl\":\"timeout\",\"option1\":\"%s\",\"option2\":\"%s\"}", timeout + "",
 				FormatUtils.encodeQuery(query));
 
 	}

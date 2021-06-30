@@ -24,17 +24,25 @@ public class PipeLineGraph {
 			str.append("\"").append(entry.getKey()).append("\":").append(entry.getValue().getConfig()).append(",");
 			reverseMap.put(entry.getValue(), entry.getKey());
 		}
+		//remove trailing comma fix
+		str.deleteCharAt(str.length()-1);
 		str.append("},");
 		//Add configuration
 		str.append("\"configuration\":{");
 		for (Entry<String,PipeLineComponent> entry:pipecomps.entrySet()) {
 			reverseMap.put(entry.getValue(), entry.getKey());
 			str.append("\"").append(entry.getKey()).append("\":[");
-			for(PipeLineComponent out: entry.getValue().getOutputs()) {
-				str.append("\"").append(reverseMap.get(out)).append("\",");
+			if(!entry.getValue().getOutputs().isEmpty()) {
+				for (PipeLineComponent out : entry.getValue().getOutputs()) {
+					str.append("\"").append(reverseMap.get(out)).append("\",");
+				}
+				//remove trailing comma fix
+				str.deleteCharAt(str.length() - 1);
 			}
 			str.append("],");
 		}
+		//remove trailing comma fix
+		str.deleteCharAt(str.length()-1);
 		str.append("}}");
 		return str.toString();
 	}

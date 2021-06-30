@@ -345,11 +345,12 @@
             // play with commenting this out to see the difference.
             stage.mouseMoveOutside = true;
 
-            add('source');
+
 
            drawLines();
             stage.update();
             loadConfigs();
+
         }
         function reset(){
           clearAll();
@@ -367,8 +368,8 @@
                         console.log(this.responseText);
                         var input =this.responseText
                         let regex = /\,(?!\s*?[\{\[\"\'\w])/g;
-                        var json = JSON.parse(input.replace(regex, ''));
-                        
+                        var json = JSON.parse(input);
+
                         for (const [key, values] of Object.entries(json)) {
                             clearAll();
                             parseConfig(values);
@@ -381,6 +382,10 @@
                         
                         // we get the returned data
                     }
+                  if(counter==0){
+                    //nothing loaded from the registered server configurations
+                    add('source');
+                  }
                     // end of state change: it can be after some time (async)
                 };
 
@@ -549,6 +554,8 @@
             dragger.on("click",select);
             dragger.alpha=0.8;
             stage.update();
+
+            return clone;
 
         }
         function getRandomInt(max) {
@@ -816,11 +823,11 @@
             for (const [key, values] of Object.entries(config["components"])) {
             console.log(`${key}: ${values}`);
             //draw on canvas
-            add(values["type"].toLowerCase());
+            var elem = add(values["type"].toLowerCase());
             //add the properties
             var value = values["type"].toLowerCase();
             idSubs[key] = counter - 1;
-            var elem = document.getElementById(counter-1);
+            //var elem = document.getElementById(counter-1);
             
             if(value==='window'){
                     elem.getElementsByTagName('input')[0].value=values["size"];
@@ -1119,7 +1126,7 @@
                     for (i = 0; i < data.length; i++) {
                       option = document.createElement( 'option' );
                       option.text = data[i];
-                      option.value = data[i]+"Sink";
+                      option.value = data[i];
                       var elem = document.querySelector('#sinkInfo');
                       var select = elem.getElementsByTagName('select')[0];
                       select.add( option );

@@ -75,9 +75,7 @@ public class Run implements Runnable{
 		stopPrevious();
 		
 		try {
-			PipeLineGraph graph = parser.parse(query);
-			String id = ++configCounter+"";
-			configs.put(id, graph);
+			String id = registerQuery(query);
 			response.status(200);
 			return id;
 		} catch (QueryRegistrationException e) {
@@ -88,6 +86,13 @@ public class Run implements Runnable{
 		}
 		
 
+	}
+
+	public String registerQuery(String query) throws QueryRegistrationException {
+		PipeLineGraph graph = parser.parse(query);
+		String id = ++configCounter+"";
+		configs.put(id, graph);
+		return id;
 	}
 
 	public void run()  {
@@ -122,6 +127,8 @@ public class Run implements Runnable{
 		for (Entry<String,PipeLineGraph> entry:configs.entrySet()) {
 			str.append("\"").append(entry.getKey()).append("\":").append(entry.getValue().toString()).append(",");
 		}
+		//remove trailing comma fix
+		str.deleteCharAt(str.length()-1);
 		str.append("}");
 		String result = str.toString();
 		System.out.println(result);
