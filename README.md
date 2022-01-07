@@ -36,6 +36,11 @@ How to cite [MASSIF](https://link.springer.com/article/10.1007/s10115-016-0969-1
 
 ## Building and running MASSIF
 
+### Requirements:
+
+- Java 9+
+- Maven2
+
 ### Build
 To build the MASSIF app, call `mvn` and get the compiled `.jar`.
 ```shell
