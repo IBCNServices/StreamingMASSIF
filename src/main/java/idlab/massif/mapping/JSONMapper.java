@@ -27,13 +27,15 @@ public class JSONMapper implements MapperInf {
 //		json = "{\"datum\":{\"Event\":{\"uuid\":\"835EB7B8-CC6A-5940-A952-18469BBFA613\",\"sequence\":{\"long\":3},\"type\":\"EVENT_FCNTL\",\"threadId\":{\"int\":100106},\"hostId\":\"83C8ED1F-5045-DBCD-B39F-918F0DF4F851\",\"subject\":{\"UUID\":\"269A60A2-39BE-11E8-B8CE-15D78AC88FB6\"},\"predicateObject\":null,\"predicateObjectPath\":null,\"predicateObject2\":null,\"predicateObject2Path\":null,\"timestampNanos\":1523037672740266752,\"name\":{\"string\":\"aue_fcntl\"},\"parameters\":{\"array\":[{\"size\":-1,\"type\":\"VALUE_TYPE_CONTROL\",\"valueDataType\":\"VALUE_DATA_TYPE_INT\",\"isNull\":false,\"name\":{\"string\":\"cmd\"},\"runtimeDataType\":null,\"valueBytes\":{\"bytes\":\"03\"},\"provenance\":null,\"tag\":null,\"components\":null}]},\"location\":null,\"size\":null,\"programPoint\":null,\"properties\":{\"map\":{\"host\":\"83c8ed1f-5045-dbcd-b39f-918f0df4f851\",\"return_value\":\"2\",\"fd\":\"3\",\"exec\":\"python2.7\",\"ppid\":\"1\"}}}},\"CDMVersion\":\"18\",\"source\":\"SOURCE_FREEBSD_DTRACE_CADETS\"}\n"
 //				+ "";
 
-		mapping = "<https://obelisk.ilabt.imec.be/api/v2/scopes/{tags._scope}/things/{sourceId}/metrics/{metricId}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/sosa/ObservableProperty> .\n"
-				+ "<https://obelisk.ilabt.imec.be/api/v2/sensors/{sourceId}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/sosa/Sensor>;\n"
-				+ "	<http://www.w3.org/ns/sosa/observes>  <https://obelisk.ilabt.imec.be/api/v2/scopes/{tags._scope}/things/{sourceId}/metrics/{metricId}>.\n"
-				+ "<https://obelisk.ilabt.imec.be/api/v2/sensors/{sourceId}/{metricId}/events/{timestamp}> <http://www.w3.org/ns/sosa/hasSimpleResult> \"{value}\"^^<http://www.w3.org/2001/XMLSchema#float> ;\n"
+		json ="{\"timestamp\":1631787044000,\"metric\":\"org.dyamand.types.common.AtmosphericPressure::number\",\"value\":1020.1,\"source\":\"70:ee:50:25:78:ca\"}";
+
+		mapping = "<https://obelisk.ilabt.imec.be/api/v2/scopes/idlab.igent/things/{source}/metrics/{metric}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/sosa/ObservableProperty> .\n"
+				+ "<https://obelisk.ilabt.imec.be/api/v2/sensors/{source}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/sosa/Sensor>;\n"
+				+ "	<http://www.w3.org/ns/sosa/observes>  <https://obelisk.ilabt.imec.be/api/v2/scopes/idlab.igent/things/{source}/metrics/{metric}>.\n"
+				+ "<https://obelisk.ilabt.imec.be/api/v2/sensors/{source}/{metric}/events/{timestamp}> <http://www.w3.org/ns/sosa/hasSimpleResult> \"{value}\"^^<http://www.w3.org/2001/XMLSchema#float> ;\n"
 				+ "		 <http://www.w3.org/ns/sosa/resultTime> \"{timestamp}\" ;\n"
-				+ "		<http://www.w3.org/ns/sosa/madeBySensor> <https://obelisk.ilabt.imec.be/api/v2/sensors/{sourceId}> ;\n"
-				+ "		<http://www.w3.org/ns/sosa/observedProperty> <https://obelisk.ilabt.imec.be/api/v2/scopes/{tags._scope}/things/{sourceId}/metrics/{metricId}> ;\n"
+				+ "		<http://www.w3.org/ns/sosa/madeBySensor> <https://obelisk.ilabt.imec.be/api/v2/sensors/{source}> ;\n"
+				+ "		<http://www.w3.org/ns/sosa/observedProperty> <https://obelisk.ilabt.imec.be/api/v2/scopes/idlab.igent/things/{source}/metrics/{metric}> ;\n"
 				+ "		<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/sosa/Observation> .";
 
 		JSONMapper mapper = new JSONMapper(mapping);

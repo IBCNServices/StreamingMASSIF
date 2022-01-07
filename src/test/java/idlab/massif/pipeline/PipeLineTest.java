@@ -29,7 +29,7 @@ import idlab.massif.window.esper.EsperWindow;
 
 public class PipeLineTest {
 
-	@Test
+
 	public void test() throws InterruptedException, OWLOntologyCreationException {
 		//define window
 		WindowInf window = new EsperWindow();

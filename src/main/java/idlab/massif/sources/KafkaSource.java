@@ -42,7 +42,7 @@ public class KafkaSource implements SourceInf {
 		this.kafkaServer = kafkaServer;
 		this.kafkaTopic = kafkaTopic;
 		this.props = new Properties();
-		props.put(StreamsConfig.APPLICATION_ID_CONFIG, "StreamingMassif-KafkaSink");
+		props.put(StreamsConfig.APPLICATION_ID_CONFIG, "StreamingMassif-KafkaSink" + kafkaTopic);
 		props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServer);
 		props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 		props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
@@ -55,29 +55,33 @@ public class KafkaSource implements SourceInf {
 		this.pipeline = pipeline;
 	}
 	public void stream() {
-		this.startTime = System.currentTimeMillis();
-		StreamsBuilder builder = new StreamsBuilder();
+		try {
+			this.startTime = System.currentTimeMillis();
+			StreamsBuilder builder = new StreamsBuilder();
 
-		KStream<String, String> sensors = builder.stream(this.kafkaTopic, Consumed.with(Serdes.String(), Serdes.String()));
-		sensors
-		.filter((key, value) ->(System.currentTimeMillis()-startTime)>timeOutTime)
-		.foreach((key, value) -> {
-			if(pipeline!=null) {
-				this.pipeline.addEvent(value);
-				}
-				if(listener!=null) {
-					this.listener.notify(0, value);
-				}
-		});
-		
+			KStream<String, String> sensors = builder.stream(this.kafkaTopic, Consumed.with(Serdes.String(), Serdes.String()));
+			sensors
+					.filter((key, value) -> (System.currentTimeMillis() - startTime) > timeOutTime)
+					.foreach((key, value) -> {
+						if (pipeline != null) {
+							this.pipeline.addEvent(value);
+						}
+						if (listener != null) {
+							this.listener.notify(0, value);
+						}
+					});
 
-		final Topology topology = builder.build();
-		final KafkaStreams streams = new KafkaStreams(topology, this.props);
-		this.streams = streams;
 
-		streams.cleanUp();
+			final Topology topology = builder.build();
+			final KafkaStreams streams = new KafkaStreams(topology, this.props);
+			this.streams = streams;
 
-		streams.start();
+			streams.cleanUp();
+
+			streams.start();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 	}
 
 	@Override

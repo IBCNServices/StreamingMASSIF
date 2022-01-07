@@ -626,6 +626,8 @@
                         config.components[key]={"type": "Source","impl": selectedInput,"fileName": input1,"timeout":parseInt(input2)};
                     }else if(selectedInput==="httpPostCombinedSource"){
                         config.components[key]={"type": "Source","impl": selectedInput,"path": input1};
+                    }else{
+                      config.components[key]={"type": "Source","impl": selectedInput,"option1": input1,"option2":input2};
                     }
                 }else if(value==='Filter'){
                     var ontUrl = elem.getElementsByTagName('input')[0].value;
@@ -801,6 +803,15 @@
           outGoing={};
           lines=[];
           startFrom=null;
+          if(selected && typeof selected.name !=='string'){
+                selected.alpha=0.8;
+            
+            //hide current selection
+
+            var x = document.getElementById(selected.name);
+            x.style.display = "none";
+              
+           }
           selected=null;
           detailMap={};
           typesMap={};
@@ -859,6 +870,10 @@
                         selectElem.value='httpPostCombinedSource';
                         elem.getElementsByTagName('input')[0].value = values["path"];
                         elem.getElementsByTagName('input')[1].value = "";
+                    }else{
+                      set_selection(selectElem,values["impl"]);
+                        elem.getElementsByTagName('input')[0].value = values["option1"];
+                        elem.getElementsByTagName('input')[1].value = values["option2"];
                     }
                 }else if(value==='filter'){     
                     elem.getElementsByTagName('input')[0].value = values["ontology"];
@@ -1127,7 +1142,11 @@
                       option = document.createElement( 'option' );
                       option.text = data[i];
                       option.value = data[i];
-                      var elem = document.querySelector('#sinkInfo');
+                      var identifier = '#sinkInfo';
+                      if(data[i].endsWith('Source')){
+                        identifier = '#sourceInfo';                       
+                      }
+                      var elem = document.querySelector(identifier);
                       var select = elem.getElementsByTagName('select')[0];
                       select.add( option );
                   }
