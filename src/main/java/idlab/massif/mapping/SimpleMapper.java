@@ -20,7 +20,7 @@ public class SimpleMapper implements MapperInf {
 	}
 
 	public static void main(String args[]) {
-		String mapping = "?loc <hasvalue> ?avg.";
+		String mapping = "{loc} <hasvalue> {avg}.";
 		String input = "loc,avg,\n"
 				+ "https://igentprojectLBD#space_d6ea3a02-082e-4966-bcbf-563e69393f96,1^^http://www.w3.org/2001/XMLSchema#integer,\n"
 				+ "https://igentprojectLBD#space_21b36f84-98e4-4689-924f-112fb8dd0925,1^^http://www.w3.org/2001/XMLSchema#integer,\n"
@@ -52,7 +52,7 @@ public class SimpleMapper implements MapperInf {
 					for (int j = 0; j < vars.length; j++) {
 						String var = vars[j];
 						if (!var.equals("")) {
-							currentMap = currentMap.replaceAll("\\?" + var, variables[j]);
+							currentMap = currentMap.replaceAll("\\{" + var +"\\}", variables[j]);
 						}
 					}
 
